@@ -298,360 +298,364 @@
     const db = firebase.firestore();
 
     class AdminPanel {
-      constructor() {
-        this.stories = [];
-        this.adminPassword = "admin123";
-        this.currentEditingId = null;
-        this.categories = {
-          'fantasy': '🧙 Фэнтези',
-          'sci-fi': '🚀 Научная фантастика', 
-          'horror': '👻 Хоррор',
-          'adventure': '🗺️ Приключения',
-          'mystery': '🕵️ Мистика',
-          'custom': '📁 Своя категория'
-        };
-        this.init();
-      }
-
-      init() {
-        this.setupEventListeners();
-        this.showLoginScreen();
-      }
-
-      setupEventListeners() {
-  // Ждем когда DOM загрузится
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => this.setupEventListenersAfterLoad());
-  } else {
-    this.setupEventListenersAfterLoad();
+  constructor() {
+    this.stories = [];
+    this.adminPassword = "admin123";
+    this.currentEditingId = null;
+    this.categories = {
+      'fantasy': '🧙 Фэнтези',
+      'sci-fi': '🚀 Научная фантастика', 
+      'horror': '👻 Хоррор',
+      'adventure': '🗺️ Приключения',
+      'mystery': '🕵️ Мистика',
+      'custom': '📁 Своя категория'
+    };
+    
+    // Ждем загрузки DOM перед инициализацией
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.init());
+    } else {
+      this.init();
+    }
   }
-}
 
-setupEventListenersAfterLoad() {
-  // Логин
-  const loginForm = document.getElementById('loginForm');
-  if (loginForm) loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-  
-  // Табы
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
-  });
+  init() {
+    this.setupEventListeners();
+    this.showLoginScreen();
+  }
 
-  // Кнопки
-  const btnNewStory = document.getElementById('btnNewStory');
-  if (btnNewStory) btnNewStory.addEventListener('click', () => this.showStoryForm());
-  
-  const btnRefresh = document.getElementById('btnRefresh');
-  if (btnRefresh) btnRefresh.addEventListener('click', () => this.loadStories());
-  
-  const btnLogout = document.getElementById('btnLogout');
-  if (btnLogout) btnLogout.addEventListener('click', () => this.handleLogout());
-  
-  // Модалка
-  const closeModal = document.getElementById('closeModal');
-  if (closeModal) closeModal.addEventListener('click', () => this.hideModal());
-  
-  const storyForm = document.getElementById('storyForm');
-  if (storyForm) storyForm.addEventListener('submit', (e) => this.handleSaveStory(e));
-  
-  const btnCancel = document.getElementById('btnCancel');
-  if (btnCancel) btnCancel.addEventListener('click', () => this.hideModal());
-  
-  const btnDelete = document.getElementById('btnDelete');
-  if (btnDelete) btnDelete.addEventListener('click', () => this.handleDeleteStory());
+  setupEventListeners() {
+    // Проверяем существование элементов перед добавлением обработчиков
+    this.safeAddEventListener('loginForm', 'submit', (e) => this.handleLogin(e));
+    this.safeAddEventListener('btnNewStory', 'click', () => this.showStoryForm());
+    this.safeAddEventListener('btnRefresh', 'click', () => this.loadStories());
+    this.safeAddEventListener('btnLogout', 'click', () => this.handleLogout());
+    this.safeAddEventListener('closeModal', 'click', () => this.hideModal());
+    this.safeAddEventListener('btnCancel', 'click', () => this.hideModal());
+    this.safeAddEventListener('btnDelete', 'click', () => this.handleDeleteStory());
 
-  // Изменения в форме
-  const storyCategory = document.getElementById('storyCategory');
-  if (storyCategory) storyCategory.addEventListener('change', (e) => this.toggleCustomCategory(e));
-  
-  const publishType = document.getElementById('publishType');
-  if (publishType) publishType.addEventListener('change', (e) => this.toggleScheduleFields(e));
-}
+    // Форма
+    const storyForm = document.getElementById('storyForm');
+    if (storyForm) {
+      storyForm.addEventListener('submit', (e) => this.handleSaveStory(e));
+    }
 
-      handleLogin(e) {
-        e.preventDefault();
-        const password = document.getElementById('adminPassword').value;
-        
-        if (password === this.adminPassword) {
-          this.showAdminInterface();
-          this.loadStories();
-        } else {
-          alert('❌ Неверный пароль');
-        }
-      }
+    // Табы
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+    });
 
-      handleLogout() {
-        this.showLoginScreen();
-      }
+    // Динамические поля
+    this.safeAddEventListener('storyCategory', 'change', (e) => this.toggleCustomCategory(e));
+    this.safeAddEventListener('publishType', 'change', (e) => this.toggleScheduleFields(e));
+  }
 
-      showLoginScreen() {
-        document.getElementById('loginScreen').style.display = 'flex';
-        document.getElementById('adminInterface').style.display = 'none';
-      }
+  // Безопасное добавление обработчиков
+  safeAddEventListener(elementId, event, handler) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.addEventListener(event, handler);
+    }
+  }
 
-      showAdminInterface() {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('adminInterface').style.display = 'block';
-      }
+  // Остальные методы остаются без изменений
+  handleLogin(e) {
+    e.preventDefault();
+    const password = document.getElementById('adminPassword').value;
+    
+    if (password === this.adminPassword) {
+      this.showAdminInterface();
+      this.loadStories();
+    } else {
+      alert('❌ Неверный пароль');
+    }
+  }
 
-      switchTab(tabName) {
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        document.getElementById(`${tabName}Tab`).classList.add('active');
-      }
+  handleLogout() {
+    this.showLoginScreen();
+  }
 
-      async loadStories() {
-        try {
-          const snapshot = await db.collection('stories').orderBy('createdAt', 'desc').get();
-          this.stories = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          this.renderStories();
-          this.renderSchedule();
-        } catch (error) {
-          console.error('Ошибка загрузки:', error);
-          alert('❌ Ошибка загрузки данных');
-        }
-      }
+  showLoginScreen() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminInterface').style.display = 'none';
+  }
 
-      renderStories() {
-        const container = document.getElementById('storiesList');
-        container.innerHTML = this.stories.map(story => `
-          <div class="story-card">
-            <div class="story-header">
-              <h3 class="story-title">${story.title}</h3>
-              <div class="story-meta">
-                <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
-                ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
-                <span class="badge status-${this.getStatusType(story)}">${this.getStatusText(story)}</span>
-              </div>
-            </div>
-            <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
-            <div class="story-actions">
-              <button class="btn btn-edit" onclick="adminPanel.editStory('${story.id}')">✏️</button>
-              <button class="btn btn-delete" onclick="adminPanel.deleteStory('${story.id}')">🗑️</button>
-              ${!story.published && !story.publishDate ? 
-                `<button class="btn btn-publish" onclick="adminPanel.publishNow('${story.id}')">🚀</button>` : ''}
-            </div>
+  showAdminInterface() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminInterface').style.display = 'block';
+  }
+
+  switchTab(tabName) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`${tabName}Tab`).classList.add('active');
+  }
+
+  async loadStories() {
+    try {
+      const snapshot = await db.collection('stories').orderBy('createdAt', 'desc').get();
+      this.stories = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      this.renderStories();
+      this.renderSchedule();
+    } catch (error) {
+      console.error('Ошибка загрузки:', error);
+      alert('❌ Ошибка загрузки данных');
+    }
+  }
+
+  renderStories() {
+    const container = document.getElementById('storiesList');
+    if (!container) return;
+
+    container.innerHTML = this.stories.map(story => `
+      <div class="story-card">
+        <div class="story-header">
+          <h3 class="story-title">${story.title}</h3>
+          <div class="story-meta">
+            <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
+            ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
+            <span class="badge status-${this.getStatusType(story)}">${this.getStatusText(story)}</span>
           </div>
-        `).join('');
-      }
+        </div>
+        <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
+        <div class="story-actions">
+          <button class="btn btn-edit" onclick="adminPanel.editStory('${story.id}')">✏️</button>
+          <button class="btn btn-delete" onclick="adminPanel.deleteStory('${story.id}')">🗑️</button>
+          ${!story.published && !story.publishDate ? 
+            `<button class="btn btn-publish" onclick="adminPanel.publishNow('${story.id}')">🚀</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
 
-      renderSchedule() {
-        const container = document.getElementById('scheduleList');
-        const scheduledStories = this.stories
-          .filter(story => story.publishDate || !story.published)
-          .sort((a, b) => {
-            const dateA = this.getPublishDate(a);
-            const dateB = this.getPublishDate(b);
-            return dateA - dateB;
-          });
+  renderSchedule() {
+    const container = document.getElementById('scheduleList');
+    if (!container) return;
 
-        container.innerHTML = scheduledStories.map(story => `
-          <div class="timeline-item">
-            <div class="timeline-info">
-              <div class="story-title">${story.title}</div>
-              <div class="story-meta">
-                <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
-                ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
-              </div>
-            </div>
-            <div class="timeline-date">
-              <div class="publish-date">${this.getScheduleDate(story)}</div>
-              <div class="publish-status">${this.getStatusText(story)}</div>
-            </div>
+    const scheduledStories = this.stories
+      .filter(story => story.publishDate || !story.published)
+      .sort((a, b) => {
+        const dateA = this.getPublishDate(a);
+        const dateB = this.getPublishDate(b);
+        return dateA - dateB;
+      });
+
+    container.innerHTML = scheduledStories.map(story => `
+      <div class="timeline-item">
+        <div class="timeline-info">
+          <div class="story-title">${story.title}</div>
+          <div class="story-meta">
+            <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
+            ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
           </div>
-        `).join('');
+        </div>
+        <div class="timeline-date">
+          <div class="publish-date">${this.getScheduleDate(story)}</div>
+          <div class="publish-status">${this.getStatusText(story)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  getCategoryName(category, customCategory) {
+    return customCategory || this.categories[category] || category;
+  }
+
+  getStatusType(story) {
+    if (story.published) return 'published';
+    if (story.publishDate) return 'scheduled';
+    return 'soon';
+  }
+
+  getStatusText(story) {
+    if (story.published) return '✅ Опубликовано';
+    if (story.publishDate) {
+      const date = new Date(story.publishDate);
+      return `⏰ ${date.toLocaleDateString()}`;
+    }
+    return '🕐 Скоро';
+  }
+
+  getPublishDate(story) {
+    if (story.publishDate) return new Date(story.publishDate);
+    return new Date(story.createdAt?.toDate || story.createdAt);
+  }
+
+  getScheduleDate(story) {
+    if (story.publishDate) {
+      const date = new Date(story.publishDate);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+    if (story.published) return 'Опубликовано';
+    return 'Скоро';
+  }
+
+  showStoryForm(storyId = null) {
+    this.currentEditingId = storyId;
+    const modal = document.getElementById('storyModal');
+    const title = document.getElementById('modalTitle');
+    const deleteBtn = document.getElementById('btnDelete');
+
+    if (storyId) {
+      const story = this.stories.find(s => s.id === storyId);
+      if (story) {
+        title.textContent = 'Редактировать историю';
+        this.fillForm(story);
+        deleteBtn.style.display = 'block';
+      }
+    } else {
+      title.textContent = 'Новая история';
+      document.getElementById('storyForm').reset();
+      document.getElementById('publishType').value = 'soon';
+      this.toggleScheduleFields();
+      deleteBtn.style.display = 'none';
+    }
+
+    modal.classList.add('active');
+  }
+
+  fillForm(story) {
+    document.getElementById('storyTitle').value = story.title;
+    document.getElementById('storyCategory').value = story.category;
+    document.getElementById('customCategoryName').value = story.customCategory || '';
+    document.getElementById('storyEpisode').value = story.episode || '';
+    document.getElementById('storyDesc').value = story.description || '';
+    document.getElementById('storyContent').value = story.content || '';
+
+    // Устанавливаем тип публикации
+    if (story.published) {
+      document.getElementById('publishType').value = 'published';
+    } else if (story.publishDate) {
+      document.getElementById('publishType').value = 'scheduled';
+      document.getElementById('publishDate').value = this.formatDateTimeLocal(new Date(story.publishDate));
+    } else {
+      document.getElementById('publishType').value = 'soon';
+    }
+
+    this.toggleCustomCategory();
+    this.toggleScheduleFields();
+  }
+
+  toggleCustomCategory() {
+    const category = document.getElementById('storyCategory').value;
+    const customGroup = document.getElementById('customCategoryGroup');
+    if (customGroup) {
+      customGroup.style.display = category === 'custom' ? 'block' : 'none';
+    }
+  }
+
+  toggleScheduleFields() {
+    const publishType = document.getElementById('publishType').value;
+    const scheduleGroup = document.getElementById('scheduleGroup');
+    if (scheduleGroup) {
+      scheduleGroup.style.display = publishType === 'scheduled' ? 'block' : 'none';
+    }
+  }
+
+  formatDateTimeLocal(date) {
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+  }
+
+  hideModal() {
+    const modal = document.getElementById('storyModal');
+    if (modal) {
+      modal.classList.remove('active');
+    }
+  }
+
+  async handleSaveStory(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const category = formData.get('category');
+    const publishType = formData.get('publishType');
+
+    const storyData = {
+      title: formData.get('title').trim(),
+      category: category,
+      customCategory: category === 'custom' ? formData.get('customCategoryName').trim() : null,
+      episode: parseInt(formData.get('episode')) || null,
+      description: formData.get('description').trim(),
+      content: formData.get('content').trim(),
+      updatedAt: new Date()
+    };
+
+    // Управление статусами публикации
+    if (publishType === 'published') {
+      storyData.published = true;
+      storyData.publishDate = null;
+    } else if (publishType === 'scheduled') {
+      storyData.published = false;
+      storyData.publishDate = new Date(formData.get('publishDate'));
+    } else { // soon
+      storyData.published = false;
+      storyData.publishDate = null;
+    }
+
+    if (!this.currentEditingId) {
+      storyData.createdAt = new Date();
+    }
+
+    try {
+      if (this.currentEditingId) {
+        await db.collection('stories').doc(this.currentEditingId).update(storyData);
+      } else {
+        await db.collection('stories').add(storyData);
       }
 
-      getCategoryName(category, customCategory) {
-        return customCategory || this.categories[category] || category;
-      }
+      await this.loadStories();
+      this.hideModal();
+      alert('✅ История сохранена!');
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      alert('❌ Ошибка сохранения истории');
+    }
+  }
 
-      getStatusType(story) {
-        if (story.published) return 'published';
-        if (story.publishDate) return 'scheduled';
-        return 'soon';
-      }
+  editStory(storyId) {
+    this.showStoryForm(storyId);
+  }
 
-      getStatusText(story) {
-        if (story.published) return '✅ Опубликовано';
-        if (story.publishDate) {
-          const date = new Date(story.publishDate);
-          return `⏰ ${date.toLocaleDateString()}`;
-        }
-        return '🕐 Скоро';
-      }
+  async publishNow(storyId) {
+    try {
+      await db.collection('stories').doc(storyId).update({
+        published: true,
+        publishDate: null,
+        updatedAt: new Date()
+      });
+      await this.loadStories();
+      alert('✅ История опубликована!');
+    } catch (error) {
+      alert('❌ Ошибка публикации');
+    }
+  }
 
-      getPublishDate(story) {
-        if (story.publishDate) return new Date(story.publishDate);
-        return new Date(story.createdAt?.toDate || story.createdAt);
-      }
-
-      getScheduleDate(story) {
-        if (story.publishDate) {
-          const date = new Date(story.publishDate);
-          return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        }
-        if (story.published) return 'Опубликовано';
-        return 'Скоро';
-      }
-
-      showStoryForm(storyId = null) {
-        this.currentEditingId = storyId;
-        const modal = document.getElementById('storyModal');
-        const title = document.getElementById('modalTitle');
-        const deleteBtn = document.getElementById('btnDelete');
-
-        if (storyId) {
-          const story = this.stories.find(s => s.id === storyId);
-          if (story) {
-            title.textContent = 'Редактировать историю';
-            this.fillForm(story);
-            deleteBtn.style.display = 'block';
-          }
-        } else {
-          title.textContent = 'Новая история';
-          document.getElementById('storyForm').reset();
-          document.getElementById('publishType').value = 'soon';
-          this.toggleScheduleFields();
-          deleteBtn.style.display = 'none';
-        }
-
-        modal.classList.add('active');
-      }
-
-      fillForm(story) {
-        document.getElementById('storyTitle').value = story.title;
-        document.getElementById('storyCategory').value = story.category;
-        document.getElementById('customCategoryName').value = story.customCategory || '';
-        document.getElementById('storyEpisode').value = story.episode || '';
-        document.getElementById('storyDesc').value = story.description || '';
-        document.getElementById('storyContent').value = story.content || '';
-
-        // Устанавливаем тип публикации
-        if (story.published) {
-          document.getElementById('publishType').value = 'published';
-        } else if (story.publishDate) {
-          document.getElementById('publishType').value = 'scheduled';
-          document.getElementById('publishDate').value = this.formatDateTimeLocal(new Date(story.publishDate));
-        } else {
-          document.getElementById('publishType').value = 'soon';
-        }
-
-        this.toggleCustomCategory();
-        this.toggleScheduleFields();
-      }
-
-      toggleCustomCategory() {
-        const category = document.getElementById('storyCategory').value;
-        document.getElementById('customCategoryGroup').style.display = category === 'custom' ? 'block' : 'none';
-      }
-
-      toggleScheduleFields() {
-        const publishType = document.getElementById('publishType').value;
-        document.getElementById('scheduleGroup').style.display = publishType === 'scheduled' ? 'block' : 'none';
-      }
-
-      formatDateTimeLocal(date) {
-        return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-          .toISOString()
-          .slice(0, 16);
-      }
-
-      hideModal() {
-        document.getElementById('storyModal').classList.remove('active');
-      }
-
-      async handleSaveStory(e) {
-        e.preventDefault();
-
-        const formData = new FormData(e.target);
-        const category = formData.get('category');
-        const publishType = formData.get('publishType');
-
-        const storyData = {
-          title: formData.get('title').trim(),
-          category: category,
-          customCategory: category === 'custom' ? formData.get('customCategoryName').trim() : null,
-          episode: parseInt(formData.get('episode')) || null,
-          description: formData.get('description').trim(),
-          content: formData.get('content').trim(),
-          updatedAt: new Date()
-        };
-
-        // Управление статусами публикации
-        if (publishType === 'published') {
-          storyData.published = true;
-          storyData.publishDate = null;
-        } else if (publishType === 'scheduled') {
-          storyData.published = false;
-          storyData.publishDate = new Date(formData.get('publishDate'));
-        } else { // soon
-          storyData.published = false;
-          storyData.publishDate = null;
-        }
-
-        if (!this.currentEditingId) {
-          storyData.createdAt = new Date();
-        }
-
-        try {
-          if (this.currentEditingId) {
-            await db.collection('stories').doc(this.currentEditingId).update(storyData);
-          } else {
-            await db.collection('stories').add(storyData);
-          }
-
-          await this.loadStories();
-          this.hideModal();
-          alert('✅ История сохранена!');
-        } catch (error) {
-          console.error('Ошибка сохранения:', error);
-          alert('❌ Ошибка сохранения истории');
-        }
-      }
-
-      editStory(storyId) {
-        this.showStoryForm(storyId);
-      }
-
-      async publishNow(storyId) {
-        try {
-          await db.collection('stories').doc(storyId).update({
-            published: true,
-            publishDate: null,
-            updatedAt: new Date()
-          });
-          await this.loadStories();
-          alert('✅ История опубликована!');
-        } catch (error) {
-          alert('❌ Ошибка публикации');
-        }
-      }
-
-      async deleteStory(storyId) {
-        if (confirm('Удалить историю? Это нельзя отменить!')) {
-          try {
-            await db.collection('stories').doc(storyId).delete();
-            await this.loadStories();
-            alert('🗑️ История удалена');
-          } catch (error) {
-            alert('❌ Ошибка удаления');
-          }
-        }
-      }
-
-      handleDeleteStory() {
-        if (this.currentEditingId) {
-          this.deleteStory(this.currentEditingId);
-          this.hideModal();
-        }
+  async deleteStory(storyId) {
+    if (confirm('Удалить историю? Это нельзя отменить!')) {
+      try {
+        await db.collection('stories').doc(storyId).delete();
+        await this.loadStories();
+        alert('🗑️ История удалена');
+      } catch (error) {
+        alert('❌ Ошибка удаления');
       }
     }
+  }
+
+  handleDeleteStory() {
+    if (this.currentEditingId) {
+      this.deleteStory(this.currentEditingId);
+      this.hideModal();
+    }
+  }
+}
 
     window.adminPanel = new AdminPanel();
   </script>
