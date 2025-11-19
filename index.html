@@ -77,6 +77,12 @@
       white-space: nowrap;
     }
 
+    .nav-btn.active {
+     background: var(--accent) !important;
+     color: var(--bg) !important;
+     border-color: var(--accent) !important;
+    }
+
     .nav-btn:hover, .nav-btn.active {
       background: var(--accent);
       color: var(--bg);
@@ -434,42 +440,84 @@
   </div>
 
   <script>
-    class PublicApp {
-      constructor() {
-        this.stories = [];
-        this.categories = [];
-        this.currentStory = null;
-        this.player = new Player();
-        this.init();
-      }
+ class PublicApp {
+    constructor() {
+    this.stories = [];
+    this.categories = [];
+    this.currentStory = null;
+    this.player = new Player();
+    this.currentCategory = 'all';
+    this.currentEpisode = null;
+    this.init();
+  }   
+
+      initCategories() {
+  this.categories = {
+    'all': '📚 Все истории',
+    'fantasy': '🧙 Фэнтези',
+    'sci-fi': '🚀 Научная фантастика', 
+    'horror': '👻 Хоррор',
+    'adventure': '🗺️ Приключения',
+    'mystery': '🕵️ Мистика'
+  };
+}
+
+   renderCategoryFilters() {
+  const nav = document.getElementById('mainNav');
+  if (!nav) return;
+
+  nav.innerHTML = Object.keys(this.categories).map(category => `
+    <button class="nav-btn ${this.currentCategory === category ? 'active' : ''}" 
+            data-category="${category}">
+      ${this.categories[category]}
+    </button>
+  `).join('');
+
+  // Обработчики для фильтров
+  nav.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      this.currentCategory = e.target.dataset.category;
+      this.renderCategoryFilters();
+      this.renderStories();
+    });
+  });
+}     
+
+     getCategoryName(category, customCategory) {
+  return customCategory || this.categories[category] || category;
+}
 
       async init() {
-        await this.loadPublicData();
-        this.setupEventListeners();
-        this.renderStories();
-        this.initEffects();
-        console.log('🎬 Публичное приложение запущено');
-      }
+  await this.loadPublicData();
+  this.initCategories();
+  this.renderCategoryFilters();
+  this.setupEventListeners();
+  this.initEffects();
+  console.log('🎬 Публичное приложение запущено');
+}
 
       async loadPublicData() {
   try {
     console.log('🔄 Загрузка опубликованных историй...');
     
-    // ОПТИМАЛЬНЫЙ ЗАПРОС (индекс готов!)
-    const storiesSnapshot = await db.collection('stories')
-      .where('published', '==', true)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const storiesSnapshot = await db.collection('stories').get();
     
-    console.log('📊 Найдено документов:', storiesSnapshot.size);
-    
-    this.stories = storiesSnapshot.docs.map(doc => {
-      const data = doc.data();
-      console.log(`📖 История "${data.title}":`, data);
-      return {
-        id: doc.id,
-        ...data
-      };
+    this.stories = storiesSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+    .filter(story => {
+      // Показываем только опубликованные ИЛИ те, у которых наступила дата публикации
+      if (story.published === true) return true;
+      if (story.publishDate) {
+        return new Date(story.publishDate) <= new Date();
+      }
+      return false;
+    })
+    .sort((a, b) => {
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return dateB - dateA;
     });
 
     console.log('✅ Опубликованных историй:', this.stories.length);
@@ -478,38 +526,41 @@
 
   } catch (error) {
     console.error('❌ Ошибка загрузки данных:', error);
-    this.showError('Не удалось загрузить истории: ' + error.message);
+    this.showError('Не удалось загрузить истории');
   }
 }
 
       renderStories() {
-        const container = document.getElementById('storiesList');
-        if (!container) return;
+  const container = document.getElementById('storiesList');
+  if (!container) return;
 
-        container.innerHTML = this.stories.map(story => `
-          <div class="story-card" data-story-id="${story.id}">
-            <div class="story-header">
-              <h3 class="story-title">${story.title}</h3>
-              <span class="story-badge">${story.episodesCount || 0} эп.</span>
-            </div>
-            <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
-            <div class="story-meta">
-              <span class="story-date">📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}</span>
-              <span class="status-published">Опубликовано</span>
-            </div>
-          </div>
-        `).join('');
+  // Фильтруем по категории
+  let filteredStories = this.stories;
+  if (this.currentCategory !== 'all') {
+    filteredStories = this.stories.filter(story => 
+      story.category === this.currentCategory
+    );
+  }
 
-        if (this.stories.length === 0) {
-          container.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);">
-              <div style="font-size: 48px; margin-bottom: 20px;">📺</div>
-              <h3 style="color: var(--muted); margin-bottom: 10px;">Историй пока нет</h3>
-              <p>Администратор ещё не добавил ни одной истории</p>
-            </div>
-          `;
-        }
-      }
+  container.innerHTML = filteredStories.map(story => `
+    <div class="story-card" data-story-id="${story.id}">
+      <div class="story-header">
+        <h3 class="story-title">${story.title}</h3>
+        <div>
+          ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
+          <span class="story-badge">${this.getCategoryName(story.category, story.customCategory)}</span>
+        </div>
+      </div>
+      <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
+      <div class="story-meta">
+        <span class="story-date">📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}</span>
+        <span class="status-published">Опубликовано</span>
+      </div>
+    </div>
+  `).join('');
+
+  this.updateStoriesCount(filteredStories.length);
+}
 
       updateStoriesCount() {
         const countElement = document.getElementById('storiesCount');
