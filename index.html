@@ -671,63 +671,77 @@
         console.log('🎬 Публичное приложение запущено');
       }
 
-      async loadPublicData() {
-        try {
-          console.log('🔄 Загрузка данных...');
-          
-          const storiesSnapshot = await db.collection('stories').get();
-          
-          this.stories = storiesSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })).filter(story => {
-            if (story.isPublic === false) return false;
-            
-            // ФИКС: Автоматически публикуем истории, у которых наступила дата публикации
-            if (story.publishDate) {
-              const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
-              const now = new Date();
-              
-              // Если дата публикации наступила - автоматически публикуем
-              if (publishDate <= now && !story.published) {
-                console.log(`🔄 Автопубликация истории: ${story.title}`);
-                this.autoPublishStory(doc.id);
-                story.published = true; // Временно для отображения
-              }
-            }
-            
-            return true;
-          });
-
-          const announcementsSnapshot = await db.collection('announcements').get();
-          this.announcements = announcementsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })).filter(announcement => announcement.isPublic !== false);
-
-          console.log('✅ Загружено историй:', this.stories.length);
-          console.log('✅ Загружено анонсов:', this.announcements.length);
-          this.renderContent();
-
-        } catch (error) {
-          console.error('❌ Ошибка загрузки данных:', error);
-          this.showError('Не удалось загрузить истории');
+async loadPublicData() {
+  try {
+    console.log('🔄 Загрузка данных...');
+    
+    const storiesSnapshot = await db.collection('stories').get();
+    
+    // ФИКС: Сначала обрабатываем автопубликацию
+    const storiesToPublish = [];
+    
+    this.stories = storiesSnapshot.docs.map(doc => {
+      const story = {
+        id: doc.id,
+        ...doc.data()
+      };
+      
+      // Проверяем нужно ли автоматически опубликовать историю
+      if (story.isPublic !== false && story.publishDate && !story.published) {
+        const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
+        const now = new Date();
+        
+        if (publishDate <= now) {
+          console.log(`🔄 Автопубликация истории: ${story.title}`);
+          storiesToPublish.push(doc.id);
+          story.published = true; // Временно для отображения
         }
       }
+      
+      return story;
+    }).filter(story => story.isPublic !== false);
 
-      async autoPublishStory(storyId) {
-        try {
-          await db.collection('stories').doc(storyId).update({
-            published: true,
-            publishDate: null,
-            updatedAt: new Date()
-          });
-          console.log(`✅ История ${storyId} автоматически опубликована`);
-        } catch (error) {
-          console.error('❌ Ошибка автопубликации:', error);
-        }
-      }
+    // Автопубликуем истории у которых наступила дата
+    if (storiesToPublish.length > 0) {
+      await this.autoPublishStories(storiesToPublish);
+    }
 
+    const announcementsSnapshot = await db.collection('announcements').get();
+    this.announcements = announcementsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })).filter(announcement => announcement.isPublic !== false);
+
+    console.log('✅ Загружено историй:', this.stories.length);
+    console.log('✅ Загружено анонсов:', this.announcements.length);
+    this.renderContent();
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки данных:', error);
+    this.showError('Не удалось загрузить истории');
+  }
+}
+
+      async autoPublishStories(storyIds) {
+  try {
+    const batch = db.batch();
+    
+    for (const storyId of storyIds) {
+      const storyRef = db.collection('stories').doc(storyId);
+      batch.update(storyRef, {
+        published: true,
+        publishDate: null,
+        updatedAt: new Date()
+      });
+    }
+    
+    await batch.commit();
+    console.log(`✅ Автоматически опубликовано ${storyIds.length} историй`);
+  } catch (error) {
+    console.error('❌ Ошибка автопубликации:', error);
+  }
+}
+      
       renderContent() {
         const container = document.getElementById('storiesList');
         if (!container) return;
