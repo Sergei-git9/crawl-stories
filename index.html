@@ -455,21 +455,32 @@
   try {
     console.log('🔄 Загрузка опубликованных историй...');
     
-    // ПРОСТО ЗАГРУЖАЕМ ВСЕ ИСТОРИИ БЕЗ ФИЛЬТРА
-    const storiesSnapshot = await db.collection('stories')
-      .orderBy('createdAt', 'desc')
-      .get();
+    // ВРЕМЕННО: простой запрос без сложной сортировки
+    const storiesSnapshot = await db.collection('stories').get();
     
     console.log('📊 Найдено документов:', storiesSnapshot.size);
     
-    // ФИЛЬТРУЕМ ВРУЧНУЮ
+    // ФИЛЬТРУЕМ И СОРТИРУЕМ ВРУЧНУЮ В КОДЕ
     this.stories = storiesSnapshot.docs.map(doc => {
       const data = doc.data();
+      console.log(`📖 История "${data.title}":`, data);
       return {
         id: doc.id,
         ...data
       };
-    }).filter(story => story.published === true); // ФИЛЬТРУЕМ ТОЛЬКО ОПУБЛИКОВАННЫЕ
+    })
+    .filter(story => {
+      // Фильтруем только опубликованные
+      const isPublished = story.published === true;
+      console.log(`🔍 История "${story.title}": published = ${story.published}, isPublished = ${isPublished}`);
+      return isPublished;
+    })
+    .sort((a, b) => {
+      // Сортируем по дате создания (новые сверху)
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return dateB - dateA; // новые сверху
+    });
 
     console.log('✅ Опубликованных историй:', this.stories.length);
     this.updateStoriesCount();
