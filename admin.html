@@ -88,6 +88,23 @@
       min-height: 100px;
     }
 
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      color: var(--muted);
+    }
+
     /* ==================== */
     /* КНОПКИ */
     /* ==================== */
@@ -125,6 +142,16 @@
 
     .btn-danger {
       background: #ff4444;
+      color: white;
+    }
+
+    .btn-warning {
+      background: #ff9800;
+      color: white;
+    }
+
+    .btn-success {
+      background: #4caf50;
       color: white;
     }
 
@@ -212,6 +239,14 @@
       border-color: rgba(255,232,31,0.3);
     }
 
+    .story-card.scheduled {
+      border-color: #ffc107;
+    }
+
+    .story-card.soon {
+      border-color: #9e9e9e;
+    }
+
     .story-header {
       display: flex;
       justify-content: space-between;
@@ -249,6 +284,7 @@
     .badge.status-published { background: rgba(76,175,80,0.1); color: #4caf50; }
     .badge.status-scheduled { background: rgba(255,193,7,0.1); color: #ffc107; }
     .badge.status-soon { background: rgba(158,158,158,0.1); color: #9e9e9e; }
+    .badge.status-hidden { background: rgba(158,158,158,0.1); color: #9e9e9e; border: 1px dashed #9e9e9e; }
 
     .story-desc {
       color: var(--muted);
@@ -261,6 +297,12 @@
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+    }
+
+    .story-date {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
     }
 
     /* ==================== */
@@ -294,6 +336,10 @@
       max-height: 90vh;
       overflow-y: auto;
       border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .modal-wide {
+      max-width: 600px;
     }
 
     .modal-header {
@@ -339,6 +385,13 @@
       gap: 10px;
     }
 
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
     .timeline-item {
       background: var(--card);
       border-radius: 12px;
@@ -376,6 +429,52 @@
     }
 
     /* ==================== */
+    /* АНОНСЫ */
+    /* ==================== */
+    .announcement-card {
+      border-color: rgba(255,193,7,0.3) !important;
+    }
+
+    .badge.announcement {
+      background: rgba(255,193,7,0.1);
+      color: #ffc107;
+    }
+
+    .episodes-count {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    /* ==================== */
+    /* ФИЛЬТРЫ */
+    /* ==================== */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 12px;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    /* ==================== */
     /* АДАПТИВНОСТЬ */
     /* ==================== */
     @media (max-width: 768px) {
@@ -410,6 +509,15 @@
       .timeline-date {
         text-align: left;
         width: 100%;
+      }
+
+      .filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-btn {
+        text-align: center;
       }
     }
   </style>
@@ -466,23 +574,41 @@
 
     <div class="tabs">
       <button class="tab active" data-tab="stories">📚 Все истории</button>
+      <button class="tab" data-tab="announcements">📢 Анонсы</button>
       <button class="tab" data-tab="schedule">📅 График публикаций</button>
       <button id="btnNewStory" class="btn">+ Новая история</button>
+      <button id="btnNewAnnouncement" class="btn btn-success">+ Новый анонс</button>
     </div>
 
     <!-- Вкладка всех историй -->
     <div id="storiesTab" class="tab-content active">
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Все</button>
+        <button class="filter-btn" data-filter="published">🚀 Опубликовано</button>
+        <button class="filter-btn" data-filter="scheduled">⏰ Ожидание</button>
+        <button class="filter-btn" data-filter="soon">🕐 Скоро</button>
+        <button class="filter-btn" data-filter="hidden">👻 Скрытые</button>
+      </div>
       <div id="storiesList" class="stories-grid"></div>
+    </div>
+
+    <!-- Вкладка анонсов -->
+    <div id="announcementsTab" class="tab-content">
+      <div id="announcementsList" class="stories-grid"></div>
     </div>
 
     <!-- Вкладка графика -->
     <div id="scheduleTab" class="tab-content">
+      <div class="timeline-header">
+        <h3>📅 Запланированные публикации</h3>
+        <button id="btnClearSchedule" class="btn btn-warning">🧹 Очистить график</button>
+      </div>
       <div id="scheduleList" class="schedule-timeline"></div>
     </div>
   </div>
 
   <!-- ==================== -->
-  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ -->
+  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ИСТОРИИ -->
   <!-- ==================== -->
   <div id="storyModal" class="modal">
     <div class="modal-content">
@@ -528,6 +654,11 @@
           <textarea name="content" id="storyContent" rows="8" required placeholder="Текст который будет показываться в виде титров..."></textarea>
         </div>
 
+        <div class="checkbox-group">
+          <input type="checkbox" name="isPublic" id="storyIsPublic" checked>
+          <label for="storyIsPublic">Публичный (виден на сайте)</label>
+        </div>
+
         <div class="form-group">
           <label>Статус публикации</label>
           <select name="publishType" id="publishType">
@@ -552,6 +683,50 @@
   </div>
 
   <!-- ==================== -->
+  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ АНОНСА -->
+  <!-- ==================== -->
+  <div id="announcementModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="announcementModalTitle">Новый анонс</h3>
+        <button id="closeAnnouncementModal" class="close-btn">✕</button>
+      </div>
+      <form id="announcementForm">
+        <div class="form-group">
+          <label>Название анонса *</label>
+          <input type="text" name="title" id="announcementTitle" required>
+        </div>
+
+        <div class="form-group">
+          <label>Описание анонса *</label>
+          <textarea name="description" id="announcementDesc" rows="4" required placeholder="Описание будущей истории..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Количество запланированных эпизодов</label>
+          <input type="number" name="episodesCount" id="announcementEpisodesCount" min="1" placeholder="Например: 5">
+        </div>
+
+        <div class="form-group">
+          <label>Дата выхода первого эпизода (необязательно)</label>
+          <input type="datetime-local" name="firstEpisodeDate" id="announcementFirstEpisodeDate">
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" name="isPublic" id="announcementIsPublic" checked>
+          <label for="announcementIsPublic">Публичный (виден на сайте)</label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn">💾 Сохранить анонс</button>
+          <button type="button" id="btnCancelAnnouncement" class="btn btn-secondary">❌ Отмена</button>
+          <button type="button" id="btnDeleteAnnouncement" class="btn btn-danger" style="display:none">🗑️ Удалить анонс</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== -->
   <!-- ОСНОВНОЙ JavaScript КОД -->
   <!-- ==================== -->
   <script>
@@ -561,8 +736,11 @@
     class AdminPanel {
       constructor() {
         this.stories = [];
+        this.announcements = [];
         this.adminPassword = "1111";
         this.currentEditingId = null;
+        this.currentEditingAnnouncementId = null;
+        this.currentFilter = 'all';
         this.categories = {
           'fantasy': '🧙 Фэнтези',
           'sci-fi': '🚀 Научная фантастика', 
@@ -593,21 +771,36 @@
         // Безопасное добавление обработчиков
         this.safeAddEventListener('loginForm', 'submit', (e) => this.handleLogin(e));
         this.safeAddEventListener('btnNewStory', 'click', () => this.showStoryForm());
-        this.safeAddEventListener('btnRefresh', 'click', () => this.loadStories());
+        this.safeAddEventListener('btnNewAnnouncement', 'click', () => this.showAnnouncementForm());
+        this.safeAddEventListener('btnRefresh', 'click', () => this.loadData());
         this.safeAddEventListener('btnLogout', 'click', () => this.handleLogout());
         this.safeAddEventListener('closeModal', 'click', () => this.hideModal());
         this.safeAddEventListener('btnCancel', 'click', () => this.hideModal());
         this.safeAddEventListener('btnDelete', 'click', () => this.handleDeleteStory());
+        this.safeAddEventListener('closeAnnouncementModal', 'click', () => this.hideAnnouncementModal());
+        this.safeAddEventListener('btnCancelAnnouncement', 'click', () => this.hideAnnouncementModal());
+        this.safeAddEventListener('btnDeleteAnnouncement', 'click', () => this.handleDeleteAnnouncement());
+        this.safeAddEventListener('btnClearSchedule', 'click', () => this.clearSchedule());
 
-        // Форма
+        // Формы
         const storyForm = document.getElementById('storyForm');
         if (storyForm) {
           storyForm.addEventListener('submit', (e) => this.handleSaveStory(e));
         }
 
+        const announcementForm = document.getElementById('announcementForm');
+        if (announcementForm) {
+          announcementForm.addEventListener('submit', (e) => this.handleSaveAnnouncement(e));
+        }
+
         // Табы
         document.querySelectorAll('.tab').forEach(tab => {
           tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+        });
+
+        // Фильтры
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => this.switchFilter(e.target.dataset.filter));
         });
 
         // Динамические поля
@@ -633,7 +826,7 @@
         
         if (password === this.adminPassword) {
           this.showAdminInterface();
-          this.loadStories();
+          this.loadData();
         } else {
           alert('❌ Неверный пароль');
         }
@@ -654,7 +847,7 @@
       }
 
       // ==================== //
-      // УПРАВЛЕНИЕ ВКЛАДКАМИ //
+      // УПРАВЛЕНИЕ ВКЛАДКАМИ И ФИЛЬТРАМИ //
       // ==================== //
       
       switchTab(tabName) {
@@ -665,18 +858,35 @@
         document.getElementById(`${tabName}Tab`).classList.add('active');
       }
 
+      switchFilter(filterName) {
+        this.currentFilter = filterName;
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[data-filter="${filterName}"]`).classList.add('active');
+        this.renderStories();
+      }
+
       // ==================== //
       // РАБОТА С ДАННЫМИ //
       // ==================== //
       
-      async loadStories() {
+      async loadData() {
         try {
-          const snapshot = await db.collection('stories').orderBy('createdAt', 'desc').get();
-          this.stories = snapshot.docs.map(doc => ({
+          // Загружаем истории
+          const storiesSnapshot = await db.collection('stories').orderBy('createdAt', 'desc').get();
+          this.stories = storiesSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
           }));
+
+          // Загружаем анонсы
+          const announcementsSnapshot = await db.collection('announcements').orderBy('createdAt', 'desc').get();
+          this.announcements = announcementsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+
           this.renderStories();
+          this.renderAnnouncements();
           this.renderSchedule();
         } catch (error) {
           console.error('Ошибка загрузки:', error);
@@ -692,27 +902,62 @@
         const container = document.getElementById('storiesList');
         if (!container) return;
 
-        container.innerHTML = this.stories.map(story => `
-          <div class="story-card">
-            <div class="story-header">
-              <h3 class="story-title">${story.title}</h3>
-              <div class="story-meta">
-                <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
-                ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
-                <span class="badge status-${this.getStatusType(story)}">${this.getStatusText(story)}</span>
+        // Фильтрация историй
+        let filteredStories = this.stories;
+        
+        if (this.currentFilter === 'published') {
+          filteredStories = this.stories.filter(story => story.published === true);
+        } else if (this.currentFilter === 'scheduled') {
+          filteredStories = this.stories.filter(story => 
+            story.publishDate && new Date(story.publishDate) > new Date()
+          );
+        } else if (this.currentFilter === 'soon') {
+          filteredStories = this.stories.filter(story => 
+            !story.published && !story.publishDate
+          );
+        } else if (this.currentFilter === 'hidden') {
+          filteredStories = this.stories.filter(story => story.isPublic === false);
+        }
+
+        container.innerHTML = filteredStories.map(story => {
+          const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
+          const isSoon = !story.published && !story.publishDate;
+          const isHidden = story.isPublic === false;
+
+          return `
+            <div class="story-card ${isScheduled ? 'scheduled' : ''} ${isSoon ? 'soon' : ''}">
+              <div class="story-header">
+                <h3 class="story-title">${story.title}</h3>
+                <div class="story-meta">
+                  <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
+                  ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
+                  <span class="badge status-${this.getStatusType(story)}">${this.getStatusText(story)}</span>
+                  ${isHidden ? `<span class="badge status-hidden">👻 Скрыто</span>` : ''}
+                </div>
+              </div>
+              <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
+              ${story.publishDate ? `
+                <div class="story-date">
+                  🗓️ ${this.getStoryDate(story.publishDate).toLocaleString()}
+                </div>
+              ` : ''}
+              <div class="story-actions">
+                <button class="btn btn-secondary btn-small" onclick="adminPanel.editStory('${story.id}')">✏️ Редактировать</button>
+                <button class="btn btn-danger btn-small" onclick="adminPanel.deleteStoryPrompt('${story.id}')">🗑️ Удалить</button>
+                ${!story.published && !story.publishDate ? 
+                  `<button class="btn btn-small" onclick="adminPanel.publishNow('${story.id}')">🚀 Опубликовать</button>` : ''}
+                ${story.publishDate && new Date(story.publishDate) > new Date() ? 
+                  `<button class="btn btn-warning btn-small" onclick="adminPanel.publishNow('${story.id}')">🚀 Опубликовать сейчас</button>` : ''}
+                ${isHidden ? 
+                  `<button class="btn btn-success btn-small" onclick="adminPanel.toggleVisibility('${story.id}', true)">👁️ Показать</button>` :
+                  `<button class="btn btn-secondary btn-small" onclick="adminPanel.toggleVisibility('${story.id}', false)">👻 Скрыть</button>`
+                }
               </div>
             </div>
-            <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
-            <div class="story-actions">
-              <button class="btn btn-secondary btn-small" onclick="adminPanel.editStory('${story.id}')">✏️ Редактировать</button>
-              <button class="btn btn-danger btn-small" onclick="adminPanel.deleteStoryPrompt('${story.id}')">🗑️ Удалить</button>
-              ${!story.published && !story.publishDate ? 
-                `<button class="btn btn-small" onclick="adminPanel.publishNow('${story.id}')">🚀 Опубликовать</button>` : ''}
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
 
-        if (this.stories.length === 0) {
+        if (filteredStories.length === 0) {
           container.innerHTML = `
             <div style="text-align: center; padding: 40px; color: var(--muted); grid-column: 1 / -1;">
               <div style="font-size: 48px; margin-bottom: 20px;">📝</div>
@@ -723,12 +968,61 @@
         }
       }
 
+      renderAnnouncements() {
+        const container = document.getElementById('announcementsList');
+        if (!container) return;
+
+        container.innerHTML = this.announcements.map(announcement => {
+          const firstEpisodeDate = announcement.firstEpisodeDate?.toDate ? 
+            announcement.firstEpisodeDate.toDate() : new Date(announcement.firstEpisodeDate);
+          
+          return `
+            <div class="story-card announcement-card">
+              <div class="story-header">
+                <h3 class="story-title">${announcement.title}</h3>
+                <div class="story-meta">
+                  <span class="badge announcement">📢 Анонс</span>
+                  ${announcement.isPublic === false ? `<span class="badge status-hidden">👻 Скрыто</span>` : ''}
+                </div>
+              </div>
+              <p class="story-desc">${announcement.description || 'Описание отсутствует'}</p>
+              ${announcement.episodesCount ? `
+                <div class="episodes-count">Запланировано эпизодов: ${announcement.episodesCount}</div>
+              ` : ''}
+              ${firstEpisodeDate ? `
+                <div class="story-date">
+                  🗓️ Премьера: ${firstEpisodeDate.toLocaleString()}
+                </div>
+              ` : '<div class="story-date">🎬 Скоро</div>'}
+              <div class="story-actions">
+                <button class="btn btn-secondary btn-small" onclick="adminPanel.editAnnouncement('${announcement.id}')">✏️ Редактировать</button>
+                <button class="btn btn-danger btn-small" onclick="adminPanel.deleteAnnouncementPrompt('${announcement.id}')">🗑️ Удалить</button>
+                ${announcement.isPublic === false ? 
+                  `<button class="btn btn-success btn-small" onclick="adminPanel.toggleAnnouncementVisibility('${announcement.id}', true)">👁️ Показать</button>` :
+                  `<button class="btn btn-secondary btn-small" onclick="adminPanel.toggleAnnouncementVisibility('${announcement.id}', false)">👻 Скрыть</button>`
+                }
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        if (this.announcements.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--muted); grid-column: 1 / -1;">
+              <div style="font-size: 48px; margin-bottom: 20px;">📢</div>
+              <h3 style="color: var(--muted); margin-bottom: 10px;">Анонсов пока нет</h3>
+              <p>Создайте первый анонс</p>
+            </div>
+          `;
+        }
+      }
+
       renderSchedule() {
         const container = document.getElementById('scheduleList');
         if (!container) return;
 
         const scheduledStories = this.stories
-          .filter(story => story.publishDate || !story.published)
+          .filter(story => story.publishDate && new Date(story.publishDate) > new Date())
           .sort((a, b) => {
             const dateA = this.getPublishDate(a);
             const dateB = this.getPublishDate(b);
@@ -742,6 +1036,7 @@
               <div class="story-meta">
                 <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
                 ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
+                ${story.isPublic === false ? `<span class="badge status-hidden">👻 Скрыто</span>` : ''}
               </div>
             </div>
             <div class="timeline-date">
@@ -795,7 +1090,6 @@
           const date = this.getStoryDate(story.publishDate);
           return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
-        if (story.published) return 'Опубликовано';
         return 'Скоро';
       }
 
@@ -817,13 +1111,14 @@
           const story = this.stories.find(s => s.id === storyId);
           if (story) {
             title.textContent = 'Редактировать историю';
-            this.fillForm(story);
+            this.fillStoryForm(story);
             deleteBtn.style.display = 'block';
           }
         } else {
           title.textContent = 'Новая история';
           document.getElementById('storyForm').reset();
           document.getElementById('publishType').value = 'soon';
+          document.getElementById('storyIsPublic').checked = true;
           this.toggleScheduleFields();
           deleteBtn.style.display = 'none';
         }
@@ -831,13 +1126,14 @@
         modal.classList.add('active');
       }
 
-      fillForm(story) {
+      fillStoryForm(story) {
         document.getElementById('storyTitle').value = story.title;
         document.getElementById('storyCategory').value = story.category;
         document.getElementById('customCategoryName').value = story.customCategory || '';
         document.getElementById('storyEpisode').value = story.episode || '';
         document.getElementById('storyDesc').value = story.description || '';
         document.getElementById('storyContent').value = story.content || '';
+        document.getElementById('storyIsPublic').checked = story.isPublic !== false;
 
         // Устанавливаем тип публикации
         if (story.published) {
@@ -884,6 +1180,54 @@
       }
 
       // ==================== //
+      // РЕДАКТИРОВАНИЕ АНОНСОВ //
+      // ==================== //
+      
+      showAnnouncementForm(announcementId = null) {
+        this.currentEditingAnnouncementId = announcementId;
+        const modal = document.getElementById('announcementModal');
+        const title = document.getElementById('announcementModalTitle');
+        const deleteBtn = document.getElementById('btnDeleteAnnouncement');
+
+        if (announcementId) {
+          const announcement = this.announcements.find(a => a.id === announcementId);
+          if (announcement) {
+            title.textContent = 'Редактировать анонс';
+            this.fillAnnouncementForm(announcement);
+            deleteBtn.style.display = 'block';
+          }
+        } else {
+          title.textContent = 'Новый анонс';
+          document.getElementById('announcementForm').reset();
+          document.getElementById('announcementIsPublic').checked = true;
+          deleteBtn.style.display = 'none';
+        }
+
+        modal.classList.add('active');
+      }
+
+      fillAnnouncementForm(announcement) {
+        document.getElementById('announcementTitle').value = announcement.title;
+        document.getElementById('announcementDesc').value = announcement.description || '';
+        document.getElementById('announcementEpisodesCount').value = announcement.episodesCount || '';
+        document.getElementById('announcementIsPublic').checked = announcement.isPublic !== false;
+        
+        if (announcement.firstEpisodeDate) {
+          const firstEpisodeDate = this.getStoryDate(announcement.firstEpisodeDate);
+          document.getElementById('announcementFirstEpisodeDate').value = this.formatDateTimeLocal(firstEpisodeDate);
+        } else {
+          document.getElementById('announcementFirstEpisodeDate').value = '';
+        }
+      }
+
+      hideAnnouncementModal() {
+        const modal = document.getElementById('announcementModal');
+        if (modal) {
+          modal.classList.remove('active');
+        }
+      }
+
+      // ==================== //
       // СОХРАНЕНИЕ ДАННЫХ //
       // ==================== //
       
@@ -901,6 +1245,7 @@
           episode: parseInt(formData.get('episode')) || null,
           description: formData.get('description').trim(),
           content: formData.get('content').trim(),
+          isPublic: formData.get('isPublic') === 'on',
           updatedAt: new Date()
         };
 
@@ -912,10 +1257,10 @@
           storyData.published = false;
           const dateString = formData.get('publishDate');
           if (dateString) {
-          // Явно создаем дату в UTC и сохраняем как Timestamp
-          const date = new Date(dateString);
-          storyData.publishDate = firebase.firestore.Timestamp.fromDate(date);
-     }
+            // Явно создаем дату в UTC и сохраняем как Timestamp
+            const date = new Date(dateString);
+            storyData.publishDate = firebase.firestore.Timestamp.fromDate(date);
+          }
         } else { // soon
           storyData.published = false;
           storyData.publishDate = null;
@@ -940,12 +1285,56 @@
             await db.collection('stories').add(storyData);
           }
 
-          await this.loadStories();
+          await this.loadData();
           this.hideModal();
           alert('✅ История сохранена!');
         } catch (error) {
           console.error('Ошибка сохранения:', error);
           alert('❌ Ошибка сохранения истории');
+        }
+      }
+
+      async handleSaveAnnouncement(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+
+        const announcementData = {
+          title: formData.get('title').trim(),
+          description: formData.get('description').trim(),
+          episodesCount: parseInt(formData.get('episodesCount')) || null,
+          isPublic: formData.get('isPublic') === 'on',
+          updatedAt: new Date()
+        };
+
+        const dateString = formData.get('firstEpisodeDate');
+        if (dateString) {
+          const date = new Date(dateString);
+          announcementData.firstEpisodeDate = firebase.firestore.Timestamp.fromDate(date);
+        } else {
+          announcementData.firstEpisodeDate = null;
+        }
+
+        // Валидация
+        if (!announcementData.title || !announcementData.description) {
+          alert('❌ Заполните название и описание анонса');
+          return;
+        }
+
+        try {
+          if (this.currentEditingAnnouncementId) {
+            await db.collection('announcements').doc(this.currentEditingAnnouncementId).update(announcementData);
+          } else {
+            announcementData.createdAt = new Date();
+            await db.collection('announcements').add(announcementData);
+          }
+
+          await this.loadData();
+          this.hideAnnouncementModal();
+          alert('✅ Анонс сохранен!');
+        } catch (error) {
+          console.error('Ошибка сохранения:', error);
+          alert('❌ Ошибка сохранения анонса');
         }
       }
 
@@ -969,7 +1358,7 @@
       async deleteStory(storyId) {
         try {
           await db.collection('stories').doc(storyId).delete();
-          await this.loadStories();
+          await this.loadData();
           alert('🗑️ История удалена');
         } catch (error) {
           console.error('Ошибка удаления:', error);
@@ -984,10 +1373,23 @@
             publishDate: null,
             updatedAt: new Date()
           });
-          await this.loadStories();
+          await this.loadData();
           alert('✅ История опубликована!');
         } catch (error) {
           alert('❌ Ошибка публикации');
+        }
+      }
+
+      async toggleVisibility(storyId, isPublic) {
+        try {
+          await db.collection('stories').doc(storyId).update({
+            isPublic: isPublic,
+            updatedAt: new Date()
+          });
+          await this.loadData();
+          alert(`✅ История ${isPublic ? 'опубликована' : 'скрыта'}!`);
+        } catch (error) {
+          alert('❌ Ошибка изменения видимости');
         }
       }
 
@@ -995,6 +1397,87 @@
         if (this.currentEditingId) {
           this.deleteStoryPrompt(this.currentEditingId);
           this.hideModal();
+        }
+      }
+
+      // ==================== //
+      // ДЕЙСТВИЯ С АНОНСАМИ //
+      // ==================== //
+      
+      editAnnouncement(announcementId) {
+        this.showAnnouncementForm(announcementId);
+      }
+
+      deleteAnnouncementPrompt(announcementId) {
+        const announcement = this.announcements.find(a => a.id === announcementId);
+        if (!announcement) return;
+
+        if (confirm(`Удалить анонс "${announcement.title}"? Это действие нельзя отменить.`)) {
+          this.deleteAnnouncement(announcementId);
+        }
+      }
+
+      async deleteAnnouncement(announcementId) {
+        try {
+          await db.collection('announcements').doc(announcementId).delete();
+          await this.loadData();
+          alert('🗑️ Анонс удален');
+        } catch (error) {
+          console.error('Ошибка удаления:', error);
+          alert('❌ Ошибка удаления анонса');
+        }
+      }
+
+      async toggleAnnouncementVisibility(announcementId, isPublic) {
+        try {
+          await db.collection('announcements').doc(announcementId).update({
+            isPublic: isPublic,
+            updatedAt: new Date()
+          });
+          await this.loadData();
+          alert(`✅ Анонс ${isPublic ? 'опубликован' : 'скрыт'}!`);
+        } catch (error) {
+          alert('❌ Ошибка изменения видимости');
+        }
+      }
+
+      handleDeleteAnnouncement() {
+        if (this.currentEditingAnnouncementId) {
+          this.deleteAnnouncementPrompt(this.currentEditingAnnouncementId);
+          this.hideAnnouncementModal();
+        }
+      }
+
+      // ==================== //
+      // ОЧИСТКА ГРАФИКА //
+      // ==================== //
+      
+      async clearSchedule() {
+        if (!confirm('Очистить график публикаций? Все запланированные истории будут опубликованы сейчас.')) {
+          return;
+        }
+
+        try {
+          const batch = db.batch();
+          const scheduledStories = this.stories.filter(story => 
+            story.publishDate && new Date(story.publishDate) > new Date()
+          );
+
+          for (const story of scheduledStories) {
+            const storyRef = db.collection('stories').doc(story.id);
+            batch.update(storyRef, {
+              published: true,
+              publishDate: null,
+              updatedAt: new Date()
+            });
+          }
+
+          await batch.commit();
+          await this.loadData();
+          alert(`✅ Опубликовано ${scheduledStories.length} запланированных историй!`);
+        } catch (error) {
+          console.error('Ошибка очистки графика:', error);
+          alert('❌ Ошибка очистки графика');
         }
       }
     }

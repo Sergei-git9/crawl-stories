@@ -286,6 +286,27 @@
       box-shadow: 0 10px 30px rgba(255,232,31,0.1);
     }
 
+    .story-card.scheduled {
+      border-color: #ffc107 !important;
+      background: linear-gradient(180deg, #0b0b0f, #1a1a1f) !important;
+    }
+
+    .story-card.soon {
+      border-color: #9e9e9e !important;
+      background: linear-gradient(180deg, #0b0b0f, #15151a) !important;
+    }
+
+    .story-card.blocked {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .story-card.blocked:hover {
+      transform: none;
+      border-color: rgba(255,255,255,0.03) !important;
+      box-shadow: none;
+    }
+
     .story-header {
       display: flex;
       justify-content: space-between;
@@ -310,6 +331,16 @@
       font-weight: bold;
       margin-left: 10px;
       white-space: nowrap;
+    }
+
+    .story-badge.scheduled {
+      background: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
+    }
+
+    .story-badge.soon {
+      background: rgba(158, 158, 158, 0.1);
+      color: #9e9e9e;
     }
 
     .story-desc {
@@ -340,6 +371,91 @@
       font-weight: bold;
     }
 
+    .status-scheduled {
+      background: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .status-soon {
+      background: rgba(158, 158, 158, 0.1);
+      color: #9e9e9e;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .blocked-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(2,2,5,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(2px);
+    }
+
+    .story-card.blocked:hover .blocked-overlay {
+      opacity: 1;
+    }
+
+    .blocked-message {
+      text-align: center;
+      padding: 20px;
+      color: var(--accent);
+    }
+
+    .blocked-message h4 {
+      margin: 0 0 10px 0;
+      color: var(--accent);
+    }
+
+    .blocked-message p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .countdown-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .countdown-progress {
+      height: 100%;
+      background: linear-gradient(90deg, #ffc107, #ff9800);
+      border-radius: 2px;
+      animation: pulse 2s infinite;
+    }
+
+    .announcement-card {
+      background: linear-gradient(180deg, #15151a, #0b0b0f);
+      border: 1px solid rgba(255,193,7,0.2);
+    }
+
+    .announcement-badge {
+      background: rgba(255,193,7,0.1);
+      color: #ffc107;
+    }
+
+    .episodes-count {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
     @keyframes crawl {
       0% { transform: translateY(120vh) rotateX(20deg) scale(1); opacity: 1; }
       100% { transform: translateY(-260vh) rotateX(20deg) scale(0.36); opacity: 0; }
@@ -349,6 +465,12 @@
       0% { opacity: 0.15; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.12); }
       100% { opacity: 0.35; transform: scale(1); }
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
     }
 
     @media (max-width: 768px) {
@@ -369,39 +491,6 @@
       .story-card { padding: 15px; }
       .story-header { flex-direction: column; gap: 8px; }
       .story-badge { align-self: flex-start; margin-left: 0; }
-    }
-
-    /* Стили для обратного отсчета */
-    .story-card.scheduled {
-      border-color: #ffc107 !important;
-      background: linear-gradient(180deg, #0b0b0f, #1a1a1f) !important;
-    }
-
-    .status-published.scheduled {
-      background: rgba(255, 193, 7, 0.1) !important;
-      color: #ffc107 !important;
-    }
-
-    .countdown-bar {
-      height: 4px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 2px;
-      margin-top: 10px;
-      overflow: hidden;
-    }
-
-    .countdown-progress {
-      height: 100%;
-      background: linear-gradient(90deg, #ffc107, #ff9800);
-      border-radius: 2px;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.7; }
-      50% { opacity: 1; }
-      100% { opacity: 0.7;
-      }
     }
   </style>
 
@@ -475,17 +564,20 @@
     class PublicApp {
       constructor() {
         this.stories = [];
+        this.announcements = [];
         this.categories = {};
         this.currentStory = null;
         this.player = new Player();
         this.currentCategory = 'all';
-        this.currentEpisode = null;
         this.init();
       }
 
       initCategories() {
         this.categories = {
           'all': '📚 Все истории',
+          'published': '🚀 Опубликовано',
+          'scheduled': '⏰ Ожидание', 
+          'announcements': '📢 Анонсы',
           'fantasy': '🧙 Фэнтези',
           'sci-fi': '🚀 Научная фантастика', 
           'horror': '👻 Хоррор',
@@ -516,21 +608,21 @@
           btn.addEventListener('click', (e) => {
             this.currentCategory = e.target.dataset.category;
             this.renderCategoryFilters();
-            this.renderStories();
+            this.renderContent();
           });
         });
       }
 
       getCategoryName(category, customCategory) {
-      const categories = {
-      'fantasy': '🧙 Фэнтези',
-      'sci-fi': '🚀 Научная фантастика', 
-      'horror': '👻 Хоррор',
-      'adventure': '🗺️ Приключения',
-      'mystery': '🕵️ Мистика'
-  };
-  return customCategory || categories[category] || category;
-}
+        const categories = {
+          'fantasy': '🧙 Фэнтези',
+          'sci-fi': '🚀 Научная фантастика', 
+          'horror': '👻 Хоррор',
+          'adventure': '🗺️ Приключения',
+          'mystery': '🕵️ Мистика'
+        };
+        return customCategory || categories[category] || category;
+      }
 
       getTimeUntilPublish(publishDate) {
         const now = new Date();
@@ -548,10 +640,18 @@
         return `Через ${minutes}м`;
       }
 
+      getProgressPercent(publishDate) {
+        const now = new Date();
+        const publish = publishDate?.toDate ? publishDate.toDate() : new Date(publishDate);
+        const total = publish - (new Date(publish.getTime() - 7 * 24 * 60 * 60 * 1000)); // неделя до публикации
+        const passed = now - (new Date(publish.getTime() - 7 * 24 * 60 * 60 * 1000));
+        return Math.min(100, Math.max(0, (passed / total) * 100));
+      }
+
       startCountdownTimer() {
         setInterval(() => {
           this.updateCountdowns();
-        }, 60000);
+        }, 30000); // Обновляем каждые 30 секунд
       }
 
       updateCountdowns() {
@@ -560,7 +660,7 @@
         );
         
         if (storiesWithCountdown.length > 0) {
-          this.renderStories();
+          this.renderContent();
         }
       }
 
@@ -578,30 +678,36 @@
         try {
           console.log('🔄 Загрузка опубликованных историй...');
           
+          // Загружаем истории
           const storiesSnapshot = await db.collection('stories').get();
           
           this.stories = storiesSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-          }))
-          .filter(story => {
-           // Показываем опубликованные И запланированные (для таймера)
-           if (story.published === true) return true;
-           if (story.publishDate) {
-          // Показываем запланированные чтобы видеть таймер
-           return true;
-             }
-           return false;
-        })
-          .sort((a, b) => {
-            // Сначала запланированные, потом опубликованные
-            const dateA = a.publishDate?.toDate ? a.publishDate.toDate() : new Date(a.publishDate || a.createdAt);
-            const dateB = b.publishDate?.toDate ? b.publishDate.toDate() : new Date(b.publishDate || b.createdAt);
-            return dateB - dateA;
+          })).filter(story => {
+            // ФИКС: Показываем только опубликованные ИЛИ запланированные с наступившей датой
+            if (story.published === true) return true;
+            
+            if (story.publishDate) {
+              const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
+              // Показываем запланированные только если время наступило И публичные
+              return publishDate <= new Date() && story.isPublic !== false;
+            }
+            
+            // Не показываем "скоро" если они скрыты
+            return story.isPublic !== false;
           });
 
+          // Загружаем анонсы
+          const announcementsSnapshot = await db.collection('announcements').get();
+          this.announcements = announcementsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })).filter(announcement => announcement.isPublic !== false);
+
           console.log('✅ Загружено историй:', this.stories.length);
-          this.renderStories();
+          console.log('✅ Загружено анонсов:', this.announcements.length);
+          this.renderContent();
 
         } catch (error) {
           console.error('❌ Ошибка загрузки данных:', error);
@@ -609,59 +715,149 @@
         }
       }
 
+      renderContent() {
+        const container = document.getElementById('storiesList');
+        if (!container) return;
+
+        let content = '';
+        
+        if (this.currentCategory === 'announcements') {
+          content = this.renderAnnouncements();
+        } else {
+          content = this.renderStories();
+        }
+
+        container.innerHTML = content;
+      }
+
       renderStories() {
-  const container = document.getElementById('storiesList');
-  if (!container) return;
+        // Фильтруем истории по категории
+        let filteredStories = this.stories;
+        
+        if (this.currentCategory === 'published') {
+          filteredStories = this.stories.filter(story => story.published === true);
+        } else if (this.currentCategory === 'scheduled') {
+          filteredStories = this.stories.filter(story => 
+            story.publishDate && new Date(story.publishDate) > new Date()
+          );
+        } else if (this.currentCategory !== 'all') {
+          filteredStories = this.stories.filter(story => 
+            story.category === this.currentCategory
+          );
+        }
 
-  // Фильтруем по категории
-  let filteredStories = this.stories;
-  if (this.currentCategory !== 'all') {
-    filteredStories = this.stories.filter(story => 
-      story.category === this.currentCategory
-    );
-  }
+        this.updateStoriesCount(filteredStories.length);
 
-  container.innerHTML = filteredStories.map(story => {
-    const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
-    const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
-    
-    return `
-      <div class="story-card ${isScheduled ? 'scheduled' : ''}" data-story-id="${story.id}">
-        <div class="story-header">
-          <h3 class="story-title">${story.title}</h3>
-          <div>
-            ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
-            <span class="story-badge">${this.getCategoryName(story.category, story.customCategory)}</span>
-          </div>
-        </div>
-        <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
-        <div class="story-meta">
-          <span class="story-date">
-            ${isScheduled ? 
-              `⏰ ${this.getTimeUntilPublish(story.publishDate)}` : 
-              `📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}`
-            }
-          </span>
-          <span class="status-published ${isScheduled ? 'scheduled' : ''}">
-            ${isScheduled ? '🕐 Скоро' : '✅ Опубликовано'}
-          </span>
-        </div>
-        ${isScheduled ? `
-          <div class="countdown-bar">
-            <div class="countdown-progress"></div>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
+        if (filteredStories.length === 0) {
+          return `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--muted);">
+              <div style="font-size: 64px; margin-bottom: 20px;">📝</div>
+              <h3 style="margin-bottom: 10px; color: var(--muted);">Пока здесь пусто</h3>
+              <p>Истории появятся скоро...</p>
+            </div>
+          `;
+        }
 
-  this.updateStoriesCount(filteredStories.length);
-}
+        return filteredStories.map(story => {
+          const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
+          const isSoon = !story.published && !story.publishDate;
+          const isBlocked = isScheduled || isSoon;
+          const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
+          
+          return `
+            <div class="story-card ${isScheduled ? 'scheduled' : ''} ${isSoon ? 'soon' : ''} ${isBlocked ? 'blocked' : ''}" 
+                 data-story-id="${story.id}">
+              <div class="story-header">
+                <h3 class="story-title">${story.title}</h3>
+                <div>
+                  ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
+                  <span class="story-badge ${isScheduled ? 'scheduled' : ''} ${isSoon ? 'soon' : ''}">
+                    ${this.getCategoryName(story.category, story.customCategory)}
+                  </span>
+                </div>
+              </div>
+              <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
+              <div class="story-meta">
+                <span class="story-date">
+                  ${isScheduled ? 
+                    `⏰ ${this.getTimeUntilPublish(story.publishDate)}` : 
+                    isSoon ?
+                    `🕐 Скоро` :
+                    `📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}`
+                  }
+                </span>
+                <span class="${isScheduled ? 'status-scheduled' : isSoon ? 'status-soon' : 'status-published'}">
+                  ${isScheduled ? '⏰ Ожидание' : isSoon ? '🕐 Скоро' : '✅ Опубликовано'}
+                </span>
+              </div>
+              ${isScheduled ? `
+                <div class="countdown-bar">
+                  <div class="countdown-progress" style="width: ${this.getProgressPercent(story.publishDate)}%"></div>
+                </div>
+              ` : ''}
+              
+              ${isBlocked ? `
+                <div class="blocked-overlay">
+                  <div class="blocked-message">
+                    <h4>⏳ Еще не доступно</h4>
+                    <p>Ожидайте выхода, а пока можете посмотреть другие наши истории</p>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderAnnouncements() {
+        if (this.announcements.length === 0) {
+          return `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--muted);">
+              <div style="font-size: 64px; margin-bottom: 20px;">📢</div>
+              <h3 style="margin-bottom: 10px; color: var(--muted);">Анонсов пока нет</h3>
+              <p>Следите за обновлениями...</p>
+            </div>
+          `;
+        }
+
+        this.updateStoriesCount(this.announcements.length);
+
+        return this.announcements.map(announcement => {
+          const firstEpisodeDate = announcement.firstEpisodeDate?.toDate ? 
+            announcement.firstEpisodeDate.toDate() : new Date(announcement.firstEpisodeDate);
+          
+          return `
+            <div class="story-card announcement-card">
+              <div class="story-header">
+                <h3 class="story-title">${announcement.title}</h3>
+                <div>
+                  <span class="story-badge announcement-badge">📢 Анонс</span>
+                </div>
+              </div>
+              <p class="story-desc">${announcement.description || 'Описание отсутствует'}</p>
+              ${announcement.episodesCount ? `
+                <div class="episodes-count">Запланировано эпизодов: ${announcement.episodesCount}</div>
+              ` : ''}
+              <div class="story-meta">
+                <span class="story-date">
+                  ${firstEpisodeDate && firstEpisodeDate > new Date() ? 
+                    `🎬 Премьера: ${firstEpisodeDate.toLocaleDateString()}` : 
+                    '🎬 Скоро'
+                  }
+                </span>
+                <span class="status-soon">📢 Анонс</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
 
       updateStoriesCount(count) {
         const countElement = document.getElementById('storiesCount');
         if (countElement) {
-          countElement.textContent = `${count} ${this.getStoriesWord(count)}`;
+          const word = this.currentCategory === 'announcements' ? 
+            this.getAnnouncementsWord(count) : this.getStoriesWord(count);
+          countElement.textContent = `${count} ${word}`;
         }
       }
 
@@ -671,6 +867,12 @@
         return 'историй';
       }
 
+      getAnnouncementsWord(count) {
+        if (count % 10 === 1 && count % 100 !== 11) return 'анонс';
+        if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return 'анонса';
+        return 'анонсов';
+      }
+
       setupEventListeners() {
         document.getElementById('btnAdmin')?.addEventListener('click', () => {
           window.open('admin.html', '_blank');
@@ -678,9 +880,13 @@
 
         document.addEventListener('click', (e) => {
           const storyCard = e.target.closest('.story-card');
-          if (storyCard) {
+          if (storyCard && !storyCard.classList.contains('blocked')) {
             const storyId = storyCard.dataset.storyId;
-            this.openStory(storyId);
+            if (storyId) {
+              this.openStory(storyId);
+            }
+          } else if (storyCard && storyCard.classList.contains('blocked')) {
+            this.showBlockedMessage();
           }
         });
       }
@@ -692,6 +898,17 @@
           return;
         }
 
+        // ФИКС: Проверяем доступность истории
+        if (story.publishDate && new Date(story.publishDate) > new Date()) {
+          this.showBlockedMessage();
+          return;
+        }
+
+        if (!story.published && !story.publishDate) {
+          this.showBlockedMessage();
+          return;
+        }
+
         if (!story.content) {
           console.warn('У истории нет контента:', storyId);
           return;
@@ -700,6 +917,14 @@
         this.currentStory = story;
         document.getElementById('crawl').textContent = story.content;
         this.player.restartAnimation();
+      }
+
+      showBlockedMessage() {
+        const crawl = document.getElementById('crawl');
+        if (crawl) {
+          crawl.textContent = 'Ой! Данный эпизод еще не доступен, ожидайте выхода, а пока можете посмотреть другие наши истории и эпизоды.';
+          this.player.restartAnimation();
+        }
       }
 
       initEffects() {
