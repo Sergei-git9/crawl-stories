@@ -370,6 +370,39 @@
       .story-header { flex-direction: column; gap: 8px; }
       .story-badge { align-self: flex-start; margin-left: 0; }
     }
+
+    /* Стили для обратного отсчета */
+.story-card.scheduled {
+  border-color: #ffc107 !important;
+  background: linear-gradient(180deg, #0b0b0f, #1a1a1f) !important;
+}
+
+.status-published.scheduled {
+  background: rgba(255, 193, 7, 0.1) !important;
+  color: #ffc107 !important;
+}
+
+.countdown-bar {
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.countdown-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #ffc107, #ff9800);
+  border-radius: 2px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+    
   </style>
 
   <script>
@@ -485,6 +518,39 @@
 
      getCategoryName(category, customCategory) {
   return customCategory || this.categories[category] || category;
+}    
+   // После getCategoryName() добавляем:
+getTimeUntilPublish(publishDate) {
+  const now = new Date();
+  const publish = publishDate?.toDate ? publishDate.toDate() : new Date(publishDate);
+  const diff = publish - now;
+  
+  if (diff <= 0) return 'Скоро...';
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  
+  if (days > 0) return `Через ${days}д ${hours}ч`;
+  if (hours > 0) return `Через ${hours}ч ${minutes}м`;
+  return `Через ${minutes}м`;
+}
+
+// И метод для обновления отсчета каждую минуту
+startCountdownTimer() {
+  setInterval(() => {
+    this.updateCountdowns();
+  }, 60000); // Каждую минуту
+}
+
+updateCountdowns() {
+  const storiesWithCountdown = this.stories.filter(story => 
+    story.publishDate && new Date(story.publishDate) > new Date()
+  );
+  
+  if (storiesWithCountdown.length > 0) {
+    this.renderStories(); // Перерисовываем чтобы обновить отсчет
+  }
 }
 
       async init() {
@@ -493,6 +559,7 @@
   this.renderCategoryFilters();
   this.setupEventListeners();
   this.initEffects();
+  this.startCountdownTimer(); // ← ДОБАВЬ ЭТУ СТРОКУ
   console.log('🎬 Публичное приложение запущено');
 }
 
@@ -530,7 +597,7 @@
   }
 }
 
-      renderStories() {
+     renderStories() {
   const container = document.getElementById('storiesList');
   if (!container) return;
 
@@ -542,26 +609,43 @@
     );
   }
 
-  container.innerHTML = filteredStories.map(story => `
-    <div class="story-card" data-story-id="${story.id}">
-      <div class="story-header">
-        <h3 class="story-title">${story.title}</h3>
-        <div>
-          ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
-          <span class="story-badge">${this.getCategoryName(story.category, story.customCategory)}</span>
+  container.innerHTML = filteredStories.map(story => {
+    const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
+    const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
+    
+    return `
+      <div class="story-card ${isScheduled ? 'scheduled' : ''}" data-story-id="${story.id}">
+        <div class="story-header">
+          <h3 class="story-title">${story.title}</h3>
+          <div>
+            ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
+            <span class="story-badge">${this.getCategoryName(story.category, story.customCategory)}</span>
+          </div>
         </div>
+        <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
+        <div class="story-meta">
+          <span class="story-date">
+            ${isScheduled ? 
+              `⏰ ${this.getTimeUntilPublish(story.publishDate)}` : 
+              `📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}`
+            }
+          </span>
+          <span class="status-published ${isScheduled ? 'scheduled' : ''}">
+            ${isScheduled ? '🕐 Скоро' : '✅ Опубликовано'}
+          </span>
+        </div>
+        ${isScheduled ? `
+          <div class="countdown-bar">
+            <div class="countdown-progress"></div>
+          </div>
+        ` : ''}
       </div>
-      <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
-      <div class="story-meta">
-        <span class="story-date">📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}</span>
-        <span class="status-published">Опубликовано</span>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   this.updateStoriesCount(filteredStories.length);
-}
-
+} 
+   
       updateStoriesCount() {
         const countElement = document.getElementById('storiesCount');
         if (countElement) {
@@ -661,7 +745,40 @@
           `;
         }
       }
-    }
+
+     getTimeUntilPublish(publishDate) {
+  const now = new Date();
+  const publish = publishDate?.toDate ? publishDate.toDate() : new Date(publishDate);
+  const diff = publish - now;
+  
+  if (diff <= 0) return 'Скоро...';
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  
+  if (days > 0) return `Через ${days}д ${hours}ч`;
+  if (hours > 0) return `Через ${hours}ч ${minutes}м`;
+  return `Через ${minutes}м`;
+}
+
+startCountdownTimer() {
+  setInterval(() => {
+    this.updateCountdowns();
+  }, 60000);
+}
+
+updateCountdowns() {
+  const storiesWithCountdown = this.stories.filter(story => 
+    story.publishDate && new Date(story.publishDate) > new Date()
+  );
+  
+  if (storiesWithCountdown.length > 0) {
+    this.renderStories();
+  }
+}
+ 
+     }
 
     class Player {
       constructor() {
