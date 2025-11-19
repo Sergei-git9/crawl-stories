@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Админ-панель CRAWL.STORIES</title>
   
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
   
+  <!-- ==================== -->
+  <!-- СТИЛИ -->
+  <!-- ==================== -->
   <style>
     :root {
       --bg: #020205;
@@ -17,7 +21,11 @@
       --font: "Courier New", monospace;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
 
     body {
       background: var(--bg);
@@ -26,6 +34,9 @@
       min-height: 100vh;
     }
 
+    /* ==================== */
+    /* ЭКРАН ВХОДА */
+    /* ==================== */
     .login-screen {
       min-height: 100vh;
       display: flex;
@@ -45,6 +56,9 @@
       margin-bottom: 30px;
     }
 
+    /* ==================== */
+    /* ФОРМЫ */
+    /* ==================== */
     .form-group {
       margin-bottom: 20px;
       text-align: left;
@@ -56,7 +70,9 @@
       color: var(--muted);
     }
 
-    .form-group input {
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
       width: 100%;
       padding: 12px;
       border-radius: 8px;
@@ -64,8 +80,17 @@
       background: #05050a;
       color: #ddd;
       font-family: var(--font);
+      font-size: 14px;
     }
 
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* ==================== */
+    /* КНОПКИ */
+    /* ==================== */
     button {
       background: var(--accent);
       color: var(--bg);
@@ -75,9 +100,37 @@
       cursor: pointer;
       font-family: var(--font);
       font-weight: bold;
-      width: 100%;
+      transition: opacity 0.3s;
     }
 
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-small {
+      padding: 8px 16px;
+      font-size: 12px;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .btn-danger {
+      background: #ff4444;
+      color: white;
+    }
+
+    /* ==================== */
+    /* ОСНОВНОЙ ИНТЕРФЕЙС */
+    /* ==================== */
     .admin-interface {
       display: none;
       min-height: 100vh;
@@ -87,6 +140,9 @@
       padding: 15px 20px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
       background: rgba(2,2,5,0.95);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
     .header-content {
@@ -97,12 +153,16 @@
       margin: 0 auto;
     }
 
+    /* ==================== */
+    /* ВКЛАДКИ */
+    /* ==================== */
     .tabs {
       display: flex;
       gap: 10px;
       margin: 20px auto;
       max-width: 1200px;
       padding: 0 20px;
+      flex-wrap: wrap;
     }
 
     .tab {
@@ -112,6 +172,7 @@
       color: var(--muted);
       border-radius: 8px;
       cursor: pointer;
+      transition: all 0.3s;
     }
 
     .tab.active {
@@ -130,6 +191,9 @@
       display: block;
     }
 
+    /* ==================== */
+    /* КАРТОЧКИ ИСТОРИЙ */
+    /* ==================== */
     .stories-grid {
       display: grid;
       gap: 15px;
@@ -141,6 +205,11 @@
       border-radius: 12px;
       padding: 20px;
       border: 1px solid rgba(255,255,255,0.1);
+      transition: border-color 0.3s;
+    }
+
+    .story-card:hover {
+      border-color: rgba(255,232,31,0.3);
     }
 
     .story-header {
@@ -148,12 +217,14 @@
       justify-content: space-between;
       align-items: start;
       margin-bottom: 10px;
+      gap: 10px;
     }
 
     .story-title {
       color: var(--accent);
       font-size: 18px;
       margin: 0;
+      line-height: 1.3;
     }
 
     .story-meta {
@@ -162,11 +233,15 @@
       flex-wrap: wrap;
     }
 
+    /* ==================== */
+    /* БЕЙДЖИ */
+    /* ==================== */
     .badge {
       padding: 4px 8px;
       border-radius: 6px;
       font-size: 11px;
       white-space: nowrap;
+      font-weight: bold;
     }
 
     .badge.category { background: rgba(100,200,255,0.1); color: #64c8ff; }
@@ -179,25 +254,18 @@
       color: var(--muted);
       margin-bottom: 15px;
       font-size: 14px;
+      line-height: 1.4;
     }
 
     .story-actions {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .btn {
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      border: none;
-    }
-
-    .btn-edit { background: rgba(255,255,255,0.1); color: var(--accent); }
-    .btn-delete { background: #ff4444; color: white; }
-    .btn-publish { background: var(--accent); color: var(--bg); }
-
+    /* ==================== */
+    /* МОДАЛЬНОЕ ОКНО */
+    /* ==================== */
     .modal {
       position: fixed;
       top: 0;
@@ -210,6 +278,7 @@
       justify-content: center;
       z-index: 1000;
       padding: 20px;
+      backdrop-filter: blur(5px);
     }
 
     .modal.active {
@@ -224,13 +293,16 @@
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
     .modal-header {
       display: flex;
-      justify-content: between;
+      justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
     .modal-title {
@@ -244,14 +316,23 @@
       color: var(--muted);
       font-size: 20px;
       cursor: pointer;
+      padding: 5px;
+    }
+
+    .close-btn:hover {
+      color: var(--accent);
     }
 
     .form-actions {
       display: flex;
       gap: 10px;
       margin-top: 20px;
+      flex-wrap: wrap;
     }
 
+    /* ==================== */
+    /* ГРАФИК ПУБЛИКАЦИЙ */
+    /* ==================== */
     .schedule-timeline {
       display: flex;
       flex-direction: column;
@@ -266,23 +347,76 @@
       justify-content: space-between;
       align-items: center;
       border: 1px solid rgba(255,255,255,0.1);
+      transition: border-color 0.3s;
+    }
+
+    .timeline-item:hover {
+      border-color: rgba(255,232,31,0.3);
+    }
+
+    .timeline-info {
+      flex: 1;
     }
 
     .timeline-date {
       text-align: right;
+      min-width: 150px;
     }
 
     .publish-date {
       color: var(--accent);
       font-weight: bold;
+      font-size: 14px;
     }
 
     .publish-status {
       font-size: 12px;
       color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ==================== */
+    /* АДАПТИВНОСТЬ */
+    /* ==================== */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      
+      .tabs {
+        flex-direction: column;
+      }
+      
+      .stories-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .story-header {
+        flex-direction: column;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+      }
+      
+      .timeline-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      
+      .timeline-date {
+        text-align: left;
+        width: 100%;
+      }
     }
   </style>
 
+  <!-- ==================== -->
+  <!-- FIREBASE КОНФИГ -->
+  <!-- ==================== -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyANC4K0-xI-9SvrpoiOp4v-N2XLvCQCALg",
@@ -296,373 +430,13 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
-    class AdminPanel {
-  constructor() {
-    this.stories = [];
-    this.adminPassword = "admin123";
-    this.currentEditingId = null;
-    this.categories = {
-      'fantasy': '🧙 Фэнтези',
-      'sci-fi': '🚀 Научная фантастика', 
-      'horror': '👻 Хоррор',
-      'adventure': '🗺️ Приключения',
-      'mystery': '🕵️ Мистика',
-      'custom': '📁 Своя категория'
-    };
-    
-    // Ждем загрузки DOM перед инициализацией
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => this.init());
-    } else {
-      this.init();
-    }
-  }
-
-  init() {
-    this.setupEventListeners();
-    this.showLoginScreen();
-  }
-
-  setupEventListeners() {
-    // Проверяем существование элементов перед добавлением обработчиков
-    this.safeAddEventListener('loginForm', 'submit', (e) => this.handleLogin(e));
-    this.safeAddEventListener('btnNewStory', 'click', () => this.showStoryForm());
-    this.safeAddEventListener('btnRefresh', 'click', () => this.loadStories());
-    this.safeAddEventListener('btnLogout', 'click', () => this.handleLogout());
-    this.safeAddEventListener('closeModal', 'click', () => this.hideModal());
-    this.safeAddEventListener('btnCancel', 'click', () => this.hideModal());
-    this.safeAddEventListener('btnDelete', 'click', () => this.handleDeleteStory());
-
-    // Форма
-    const storyForm = document.getElementById('storyForm');
-    if (storyForm) {
-      storyForm.addEventListener('submit', (e) => this.handleSaveStory(e));
-    }
-
-    // Табы
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
-    });
-
-    // Динамические поля
-    this.safeAddEventListener('storyCategory', 'change', (e) => this.toggleCustomCategory(e));
-    this.safeAddEventListener('publishType', 'change', (e) => this.toggleScheduleFields(e));
-  }
-
-  // Безопасное добавление обработчиков
-  safeAddEventListener(elementId, event, handler) {
-    const element = document.getElementById(elementId);
-    if (element) {
-      element.addEventListener(event, handler);
-    }
-  }
-
-  // Остальные методы остаются без изменений
-  handleLogin(e) {
-    e.preventDefault();
-    const password = document.getElementById('adminPassword').value;
-    
-    if (password === this.adminPassword) {
-      this.showAdminInterface();
-      this.loadStories();
-    } else {
-      alert('❌ Неверный пароль');
-    }
-  }
-
-  handleLogout() {
-    this.showLoginScreen();
-  }
-
-  showLoginScreen() {
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('adminInterface').style.display = 'none';
-  }
-
-  showAdminInterface() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminInterface').style.display = 'block';
-  }
-
-  switchTab(tabName) {
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-    document.getElementById(`${tabName}Tab`).classList.add('active');
-  }
-
-  async loadStories() {
-    try {
-      const snapshot = await db.collection('stories').orderBy('createdAt', 'desc').get();
-      this.stories = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      this.renderStories();
-      this.renderSchedule();
-    } catch (error) {
-      console.error('Ошибка загрузки:', error);
-      alert('❌ Ошибка загрузки данных');
-    }
-  }
-
-  renderStories() {
-    const container = document.getElementById('storiesList');
-    if (!container) return;
-
-    container.innerHTML = this.stories.map(story => `
-      <div class="story-card">
-        <div class="story-header">
-          <h3 class="story-title">${story.title}</h3>
-          <div class="story-meta">
-            <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
-            ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
-            <span class="badge status-${this.getStatusType(story)}">${this.getStatusText(story)}</span>
-          </div>
-        </div>
-        <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
-        <div class="story-actions">
-          <button class="btn btn-edit" onclick="adminPanel.editStory('${story.id}')">✏️</button>
-          <button class="btn btn-delete" onclick="adminPanel.deleteStory('${story.id}')">🗑️</button>
-          ${!story.published && !story.publishDate ? 
-            `<button class="btn btn-publish" onclick="adminPanel.publishNow('${story.id}')">🚀</button>` : ''}
-        </div>
-      </div>
-    `).join('');
-  }
-
-  renderSchedule() {
-    const container = document.getElementById('scheduleList');
-    if (!container) return;
-
-    const scheduledStories = this.stories
-      .filter(story => story.publishDate || !story.published)
-      .sort((a, b) => {
-        const dateA = this.getPublishDate(a);
-        const dateB = this.getPublishDate(b);
-        return dateA - dateB;
-      });
-
-    container.innerHTML = scheduledStories.map(story => `
-      <div class="timeline-item">
-        <div class="timeline-info">
-          <div class="story-title">${story.title}</div>
-          <div class="story-meta">
-            <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
-            ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
-          </div>
-        </div>
-        <div class="timeline-date">
-          <div class="publish-date">${this.getScheduleDate(story)}</div>
-          <div class="publish-status">${this.getStatusText(story)}</div>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  getCategoryName(category, customCategory) {
-    return customCategory || this.categories[category] || category;
-  }
-
-  getStatusType(story) {
-    if (story.published) return 'published';
-    if (story.publishDate) return 'scheduled';
-    return 'soon';
-  }
-
-  getStatusText(story) {
-    if (story.published) return '✅ Опубликовано';
-    if (story.publishDate) {
-      const date = new Date(story.publishDate);
-      return `⏰ ${date.toLocaleDateString()}`;
-    }
-    return '🕐 Скоро';
-  }
-
-  getPublishDate(story) {
-    if (story.publishDate) return new Date(story.publishDate);
-    return new Date(story.createdAt?.toDate || story.createdAt);
-  }
-
-  getScheduleDate(story) {
-    if (story.publishDate) {
-  const date = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-  }
-    if (story.published) return 'Опубликовано';
-    return 'Скоро';
-  }
-
-  showStoryForm(storyId = null) {
-    this.currentEditingId = storyId;
-    const modal = document.getElementById('storyModal');
-    const title = document.getElementById('modalTitle');
-    const deleteBtn = document.getElementById('btnDelete');
-
-    if (storyId) {
-      const story = this.stories.find(s => s.id === storyId);
-      if (story) {
-        title.textContent = 'Редактировать историю';
-        this.fillForm(story);
-        deleteBtn.style.display = 'block';
-      }
-    } else {
-      title.textContent = 'Новая история';
-      document.getElementById('storyForm').reset();
-      document.getElementById('publishType').value = 'soon';
-      this.toggleScheduleFields();
-      deleteBtn.style.display = 'none';
-    }
-
-    modal.classList.add('active');
-  }
-
-  fillForm(story) {
-    document.getElementById('storyTitle').value = story.title;
-    document.getElementById('storyCategory').value = story.category;
-    document.getElementById('customCategoryName').value = story.customCategory || '';
-    document.getElementById('storyEpisode').value = story.episode || '';
-    document.getElementById('storyDesc').value = story.description || '';
-    document.getElementById('storyContent').value = story.content || '';
-
-    // Устанавливаем тип публикации
-    if (story.published) {
-      document.getElementById('publishType').value = 'published';
-    } else if (story.publishDate) {
-      document.getElementById('publishType').value = 'scheduled';
-      document.getElementById('publishDate').value = this.formatDateTimeLocal(new Date(story.publishDate));
-    } else {
-      document.getElementById('publishType').value = 'soon';
-    }
-
-    this.toggleCustomCategory();
-    this.toggleScheduleFields();
-  }
-
-  toggleCustomCategory() {
-    const category = document.getElementById('storyCategory').value;
-    const customGroup = document.getElementById('customCategoryGroup');
-    if (customGroup) {
-      customGroup.style.display = category === 'custom' ? 'block' : 'none';
-    }
-  }
-
-  toggleScheduleFields() {
-    const publishType = document.getElementById('publishType').value;
-    const scheduleGroup = document.getElementById('scheduleGroup');
-    if (scheduleGroup) {
-      scheduleGroup.style.display = publishType === 'scheduled' ? 'block' : 'none';
-    }
-  }
-
-  formatDateTimeLocal(date) {
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16);
-  }
-
-  hideModal() {
-    const modal = document.getElementById('storyModal');
-    if (modal) {
-      modal.classList.remove('active');
-    }
-  }
-
-  async handleSaveStory(e) {
-    e.preventDefault();
-
-    const formData = new FormData(e.target);
-    const category = formData.get('category');
-    const publishType = formData.get('publishType');
-
-    const storyData = {
-      title: formData.get('title').trim(),
-      category: category,
-      customCategory: category === 'custom' ? formData.get('customCategoryName').trim() : null,
-      episode: parseInt(formData.get('episode')) || null,
-      description: formData.get('description').trim(),
-      content: formData.get('content').trim(),
-      updatedAt: new Date()
-    };
-
-    // Управление статусами публикации
-    if (publishType === 'published') {
-      storyData.published = true;
-      storyData.publishDate = null;
-    } else if (publishType === 'scheduled') {
-      storyData.published = false;
-      const dateString = formData.get('publishDate');
-      storyData.publishDate = new Date(dateString + 'Z'); // Добавляем Z для UTC
-    } else { // soon
-      storyData.published = false;
-      storyData.publishDate = null;
-    }
-
-    if (!this.currentEditingId) {
-      storyData.createdAt = new Date();
-    }
-
-    try {
-      if (this.currentEditingId) {
-        await db.collection('stories').doc(this.currentEditingId).update(storyData);
-      } else {
-        await db.collection('stories').add(storyData);
-      }
-
-      await this.loadStories();
-      this.hideModal();
-      alert('✅ История сохранена!');
-    } catch (error) {
-      console.error('Ошибка сохранения:', error);
-      alert('❌ Ошибка сохранения истории');
-    }
-  }
-
-  editStory(storyId) {
-    this.showStoryForm(storyId);
-  }
-
-  async publishNow(storyId) {
-    try {
-      await db.collection('stories').doc(storyId).update({
-        published: true,
-        publishDate: null,
-        updatedAt: new Date()
-      });
-      await this.loadStories();
-      alert('✅ История опубликована!');
-    } catch (error) {
-      alert('❌ Ошибка публикации');
-    }
-  }
-
-  async deleteStory(storyId) {
-    if (confirm('Удалить историю? Это нельзя отменить!')) {
-      try {
-        await db.collection('stories').doc(storyId).delete();
-        await this.loadStories();
-        alert('🗑️ История удалена');
-      } catch (error) {
-        alert('❌ Ошибка удаления');
-      }
-    }
-  }
-
-  handleDeleteStory() {
-    if (this.currentEditingId) {
-      this.deleteStory(this.currentEditingId);
-      this.hideModal();
-    }
-  }
-}
-
-    window.adminPanel = new AdminPanel();
   </script>
 </head>
+
 <body>
-  <!-- Экран входа -->
+  <!-- ==================== -->
+  <!-- ЭКРАН ВХОДА -->
+  <!-- ==================== -->
   <div id="loginScreen" class="login-screen">
     <div class="login-card">
       <h2>🔐 Вход в админ-панель</h2>
@@ -676,14 +450,16 @@
     </div>
   </div>
 
-  <!-- Основной интерфейс -->
+  <!-- ==================== -->
+  <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
+  <!-- ==================== -->
   <div id="adminInterface" class="admin-interface">
     <header>
       <div class="header-content">
         <h1>⚙️ АДМИН-ПАНЕЛЬ CRAWL.STORIES</h1>
         <div>
-          <button id="btnRefresh" class="btn">🔄 Обновить</button>
-          <button id="btnLogout" class="btn">🚪 Выйти</button>
+          <button id="btnRefresh" class="btn btn-secondary">🔄 Обновить</button>
+          <button id="btnLogout" class="btn btn-secondary">🚪 Выйти</button>
         </div>
       </div>
     </header>
@@ -705,7 +481,9 @@
     </div>
   </div>
 
-  <!-- Модальное окно редактирования -->
+  <!-- ==================== -->
+  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ -->
+  <!-- ==================== -->
   <div id="storyModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -742,12 +520,12 @@
 
         <div class="form-group">
           <label>Описание</label>
-          <textarea name="description" id="storyDesc" rows="3"></textarea>
+          <textarea name="description" id="storyDesc" rows="3" placeholder="Краткое описание истории..."></textarea>
         </div>
 
         <div class="form-group">
           <label>Контент (текст для анимации) *</label>
-          <textarea name="content" id="storyContent" rows="8" required></textarea>
+          <textarea name="content" id="storyContent" rows="8" required placeholder="Текст который будет показываться в виде титров..."></textarea>
         </div>
 
         <div class="form-group">
@@ -760,17 +538,469 @@
         </div>
 
         <div class="form-group" id="scheduleGroup" style="display:none">
-          <label>Дата и время публикации</label>
-          <input type="datetime-local" name="publishDate" id="publishDate">
+          <label>Дата и время публикации *</label>
+          <input type="datetime-local" name="publishDate" id="publishDate" required>
         </div>
 
         <div class="form-actions">
           <button type="submit" class="btn">💾 Сохранить</button>
-          <button type="button" id="btnCancel" class="btn">❌ Отмена</button>
-          <button type="button" id="btnDelete" class="btn" style="display:none">🗑️ Удалить</button>
+          <button type="button" id="btnCancel" class="btn btn-secondary">❌ Отмена</button>
+          <button type="button" id="btnDelete" class="btn btn-danger" style="display:none">🗑️ Удалить</button>
         </div>
       </form>
     </div>
   </div>
+
+  <!-- ==================== -->
+  <!-- ОСНОВНОЙ JavaScript КОД -->
+  <!-- ==================== -->
+  <script>
+    // ==================== //
+    // КЛАСС АДМИН ПАНЕЛИ //
+    // ==================== //
+    class AdminPanel {
+      constructor() {
+        this.stories = [];
+        this.adminPassword = "admin123";
+        this.currentEditingId = null;
+        this.categories = {
+          'fantasy': '🧙 Фэнтези',
+          'sci-fi': '🚀 Научная фантастика', 
+          'horror': '👻 Хоррор',
+          'adventure': '🗺️ Приключения',
+          'mystery': '🕵️ Мистика',
+          'custom': '📁 Своя категория'
+        };
+        
+        // Ждем загрузки DOM перед инициализацией
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+          this.init();
+        }
+      }
+
+      // ==================== //
+      // ОСНОВНЫЕ МЕТОДЫ //
+      // ==================== //
+      
+      init() {
+        this.setupEventListeners();
+        this.showLoginScreen();
+      }
+
+      setupEventListeners() {
+        // Безопасное добавление обработчиков
+        this.safeAddEventListener('loginForm', 'submit', (e) => this.handleLogin(e));
+        this.safeAddEventListener('btnNewStory', 'click', () => this.showStoryForm());
+        this.safeAddEventListener('btnRefresh', 'click', () => this.loadStories());
+        this.safeAddEventListener('btnLogout', 'click', () => this.handleLogout());
+        this.safeAddEventListener('closeModal', 'click', () => this.hideModal());
+        this.safeAddEventListener('btnCancel', 'click', () => this.hideModal());
+        this.safeAddEventListener('btnDelete', 'click', () => this.handleDeleteStory());
+
+        // Форма
+        const storyForm = document.getElementById('storyForm');
+        if (storyForm) {
+          storyForm.addEventListener('submit', (e) => this.handleSaveStory(e));
+        }
+
+        // Табы
+        document.querySelectorAll('.tab').forEach(tab => {
+          tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+        });
+
+        // Динамические поля
+        this.safeAddEventListener('storyCategory', 'change', (e) => this.toggleCustomCategory(e));
+        this.safeAddEventListener('publishType', 'change', (e) => this.toggleScheduleFields(e));
+      }
+
+      // Безопасное добавление обработчиков
+      safeAddEventListener(elementId, event, handler) {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.addEventListener(event, handler);
+        }
+      }
+
+      // ==================== //
+      // АУТЕНТИФИКАЦИЯ //
+      // ==================== //
+      
+      handleLogin(e) {
+        e.preventDefault();
+        const password = document.getElementById('adminPassword').value;
+        
+        if (password === this.adminPassword) {
+          this.showAdminInterface();
+          this.loadStories();
+        } else {
+          alert('❌ Неверный пароль');
+        }
+      }
+
+      handleLogout() {
+        this.showLoginScreen();
+      }
+
+      showLoginScreen() {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('adminInterface').style.display = 'none';
+      }
+
+      showAdminInterface() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminInterface').style.display = 'block';
+      }
+
+      // ==================== //
+      // УПРАВЛЕНИЕ ВКЛАДКАМИ //
+      // ==================== //
+      
+      switchTab(tabName) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        document.getElementById(`${tabName}Tab`).classList.add('active');
+      }
+
+      // ==================== //
+      // РАБОТА С ДАННЫМИ //
+      // ==================== //
+      
+      async loadStories() {
+        try {
+          const snapshot = await db.collection('stories').orderBy('createdAt', 'desc').get();
+          this.stories = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          this.renderStories();
+          this.renderSchedule();
+        } catch (error) {
+          console.error('Ошибка загрузки:', error);
+          alert('❌ Ошибка загрузки данных');
+        }
+      }
+
+      // ==================== //
+      // РЕНДЕР ИНТЕРФЕЙСА //
+      // ==================== //
+      
+      renderStories() {
+        const container = document.getElementById('storiesList');
+        if (!container) return;
+
+        container.innerHTML = this.stories.map(story => `
+          <div class="story-card">
+            <div class="story-header">
+              <h3 class="story-title">${story.title}</h3>
+              <div class="story-meta">
+                <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
+                ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
+                <span class="badge status-${this.getStatusType(story)}">${this.getStatusText(story)}</span>
+              </div>
+            </div>
+            <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
+            <div class="story-actions">
+              <button class="btn btn-secondary btn-small" onclick="adminPanel.editStory('${story.id}')">✏️ Редактировать</button>
+              <button class="btn btn-danger btn-small" onclick="adminPanel.deleteStoryPrompt('${story.id}')">🗑️ Удалить</button>
+              ${!story.published && !story.publishDate ? 
+                `<button class="btn btn-small" onclick="adminPanel.publishNow('${story.id}')">🚀 Опубликовать</button>` : ''}
+            </div>
+          </div>
+        `).join('');
+
+        if (this.stories.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--muted); grid-column: 1 / -1;">
+              <div style="font-size: 48px; margin-bottom: 20px;">📝</div>
+              <h3 style="color: var(--muted); margin-bottom: 10px;">Историй пока нет</h3>
+              <p>Создайте первую историю</p>
+            </div>
+          `;
+        }
+      }
+
+      renderSchedule() {
+        const container = document.getElementById('scheduleList');
+        if (!container) return;
+
+        const scheduledStories = this.stories
+          .filter(story => story.publishDate || !story.published)
+          .sort((a, b) => {
+            const dateA = this.getPublishDate(a);
+            const dateB = this.getPublishDate(b);
+            return dateA - dateB;
+          });
+
+        container.innerHTML = scheduledStories.map(story => `
+          <div class="timeline-item">
+            <div class="timeline-info">
+              <div class="story-title">${story.title}</div>
+              <div class="story-meta">
+                <span class="badge category">${this.getCategoryName(story.category, story.customCategory)}</span>
+                ${story.episode ? `<span class="badge episode">Эпизод ${story.episode}</span>` : ''}
+              </div>
+            </div>
+            <div class="timeline-date">
+              <div class="publish-date">${this.getScheduleDate(story)}</div>
+              <div class="publish-status">${this.getStatusText(story)}</div>
+            </div>
+          </div>
+        `).join('');
+
+        if (scheduledStories.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--muted);">
+              <div style="font-size: 48px; margin-bottom: 20px;">📅</div>
+              <h3 style="color: var(--muted); margin-bottom: 10px;">Нет запланированных публикаций</h3>
+              <p>Создайте историю с отложенной публикацией</p>
+            </div>
+          `;
+        }
+      }
+
+      // ==================== //
+      // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ //
+      // ==================== //
+      
+      getCategoryName(category, customCategory) {
+        return customCategory || this.categories[category] || category;
+      }
+
+      getStatusType(story) {
+        if (story.published) return 'published';
+        if (story.publishDate) return 'scheduled';
+        return 'soon';
+      }
+
+      getStatusText(story) {
+        if (story.published) return '✅ Опубликовано';
+        if (story.publishDate) {
+          const date = this.getStoryDate(story.publishDate);
+          return `⏰ ${date.toLocaleDateString()}`;
+        }
+        return '🕐 Скоро';
+      }
+
+      getPublishDate(story) {
+        if (story.publishDate) return this.getStoryDate(story.publishDate);
+        return this.getStoryDate(story.createdAt);
+      }
+
+      getScheduleDate(story) {
+        if (story.publishDate) {
+          const date = this.getStoryDate(story.publishDate);
+          return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        if (story.published) return 'Опубликовано';
+        return 'Скоро';
+      }
+
+      getStoryDate(date) {
+        return date?.toDate ? date.toDate() : new Date(date);
+      }
+
+      // ==================== //
+      // РЕДАКТИРОВАНИЕ ИСТОРИЙ //
+      // ==================== //
+      
+      showStoryForm(storyId = null) {
+        this.currentEditingId = storyId;
+        const modal = document.getElementById('storyModal');
+        const title = document.getElementById('modalTitle');
+        const deleteBtn = document.getElementById('btnDelete');
+
+        if (storyId) {
+          const story = this.stories.find(s => s.id === storyId);
+          if (story) {
+            title.textContent = 'Редактировать историю';
+            this.fillForm(story);
+            deleteBtn.style.display = 'block';
+          }
+        } else {
+          title.textContent = 'Новая история';
+          document.getElementById('storyForm').reset();
+          document.getElementById('publishType').value = 'soon';
+          this.toggleScheduleFields();
+          deleteBtn.style.display = 'none';
+        }
+
+        modal.classList.add('active');
+      }
+
+      fillForm(story) {
+        document.getElementById('storyTitle').value = story.title;
+        document.getElementById('storyCategory').value = story.category;
+        document.getElementById('customCategoryName').value = story.customCategory || '';
+        document.getElementById('storyEpisode').value = story.episode || '';
+        document.getElementById('storyDesc').value = story.description || '';
+        document.getElementById('storyContent').value = story.content || '';
+
+        // Устанавливаем тип публикации
+        if (story.published) {
+          document.getElementById('publishType').value = 'published';
+        } else if (story.publishDate) {
+          document.getElementById('publishType').value = 'scheduled';
+          document.getElementById('publishDate').value = this.formatDateTimeLocal(this.getStoryDate(story.publishDate));
+        } else {
+          document.getElementById('publishType').value = 'soon';
+        }
+
+        this.toggleCustomCategory();
+        this.toggleScheduleFields();
+      }
+
+      toggleCustomCategory() {
+        const category = document.getElementById('storyCategory').value;
+        const customGroup = document.getElementById('customCategoryGroup');
+        if (customGroup) {
+          customGroup.style.display = category === 'custom' ? 'block' : 'none';
+        }
+      }
+
+      toggleScheduleFields() {
+        const publishType = document.getElementById('publishType').value;
+        const scheduleGroup = document.getElementById('scheduleGroup');
+        if (scheduleGroup) {
+          scheduleGroup.style.display = publishType === 'scheduled' ? 'block' : 'none';
+        }
+      }
+
+      formatDateTimeLocal(date) {
+        return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16);
+      }
+
+      hideModal() {
+        const modal = document.getElementById('storyModal');
+        if (modal) {
+          modal.classList.remove('active');
+        }
+      }
+
+      // ==================== //
+      // СОХРАНЕНИЕ ДАННЫХ //
+      // ==================== //
+      
+      async handleSaveStory(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const category = formData.get('category');
+        const publishType = formData.get('publishType');
+
+        const storyData = {
+          title: formData.get('title').trim(),
+          category: category,
+          customCategory: category === 'custom' ? formData.get('customCategoryName').trim() : null,
+          episode: parseInt(formData.get('episode')) || null,
+          description: formData.get('description').trim(),
+          content: formData.get('content').trim(),
+          updatedAt: new Date()
+        };
+
+        // Управление статусами публикации
+        if (publishType === 'published') {
+          storyData.published = true;
+          storyData.publishDate = null;
+        } else if (publishType === 'scheduled') {
+          storyData.published = false;
+          const dateString = formData.get('publishDate');
+          if (dateString) {
+            storyData.publishDate = new Date(dateString);
+          }
+        } else { // soon
+          storyData.published = false;
+          storyData.publishDate = null;
+        }
+
+        // Валидация
+        if (!storyData.title || !storyData.content) {
+          alert('❌ Заполните название и контент истории');
+          return;
+        }
+
+        if (publishType === 'scheduled' && !storyData.publishDate) {
+          alert('❌ Укажите дату публикации');
+          return;
+        }
+
+        try {
+          if (this.currentEditingId) {
+            await db.collection('stories').doc(this.currentEditingId).update(storyData);
+          } else {
+            storyData.createdAt = new Date();
+            await db.collection('stories').add(storyData);
+          }
+
+          await this.loadStories();
+          this.hideModal();
+          alert('✅ История сохранена!');
+        } catch (error) {
+          console.error('Ошибка сохранения:', error);
+          alert('❌ Ошибка сохранения истории');
+        }
+      }
+
+      // ==================== //
+      // ДЕЙСТВИЯ С ИСТОРИЯМИ //
+      // ==================== //
+      
+      editStory(storyId) {
+        this.showStoryForm(storyId);
+      }
+
+      deleteStoryPrompt(storyId) {
+        const story = this.stories.find(s => s.id === storyId);
+        if (!story) return;
+
+        if (confirm(`Удалить историю "${story.title}"? Это действие нельзя отменить.`)) {
+          this.deleteStory(storyId);
+        }
+      }
+
+      async deleteStory(storyId) {
+        try {
+          await db.collection('stories').doc(storyId).delete();
+          await this.loadStories();
+          alert('🗑️ История удалена');
+        } catch (error) {
+          console.error('Ошибка удаления:', error);
+          alert('❌ Ошибка удаления истории');
+        }
+      }
+
+      async publishNow(storyId) {
+        try {
+          await db.collection('stories').doc(storyId).update({
+            published: true,
+            publishDate: null,
+            updatedAt: new Date()
+          });
+          await this.loadStories();
+          alert('✅ История опубликована!');
+        } catch (error) {
+          alert('❌ Ошибка публикации');
+        }
+      }
+
+      handleDeleteStory() {
+        if (this.currentEditingId) {
+          this.deleteStoryPrompt(this.currentEditingId);
+          this.hideModal();
+        }
+      }
+    }
+    // ==================== //
+    // КОНЕЦ КЛАССА AdminPanel //
+    // ==================== //
+
+    // Создаем глобальный экземпляр
+    window.adminPanel = new AdminPanel();
+  </script>
 </body>
 </html>
