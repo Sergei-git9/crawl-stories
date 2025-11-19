@@ -844,7 +844,8 @@
           document.getElementById('publishType').value = 'published';
         } else if (story.publishDate) {
           document.getElementById('publishType').value = 'scheduled';
-          document.getElementById('publishDate').value = this.formatDateTimeLocal(this.getStoryDate(story.publishDate));
+          const publishDate = this.getStoryDate(story.publishDate);
+          document.getElementById('publishDate').value = this.formatDateTimeLocal(publishDate);
         } else {
           document.getElementById('publishType').value = 'soon';
         }
@@ -911,8 +912,10 @@
           storyData.published = false;
           const dateString = formData.get('publishDate');
           if (dateString) {
-            storyData.publishDate = new Date(dateString);
-          }
+          // Явно создаем дату в UTC и сохраняем как Timestamp
+          const date = new Date(dateString);
+          storyData.publishDate = firebase.firestore.Timestamp.fromDate(date);
+     }
         } else { // soon
           storyData.published = false;
           storyData.publishDate = null;
