@@ -319,29 +319,54 @@
       }
 
       setupEventListeners() {
-        // Логин
-        document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
-        
-        // Табы
-        document.querySelectorAll('.tab').forEach(tab => {
-          tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
-        });
+  // Ждем когда DOM загрузится
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => this.setupEventListenersAfterLoad());
+  } else {
+    this.setupEventListenersAfterLoad();
+  }
+}
 
-        // Кнопки
-        document.getElementById('btnNewStory').addEventListener('click', () => this.showStoryForm());
-        document.getElementById('btnRefresh').addEventListener('click', () => this.loadStories());
-        document.getElementById('btnLogout').addEventListener('click', () => this.handleLogout());
-        
-        // Модалка
-        document.getElementById('closeModal').addEventListener('click', () => this.hideModal());
-        document.getElementById('storyForm').addEventListener('submit', (e) => this.handleSaveStory(e));
-        document.getElementById('btnCancel').addEventListener('click', () => this.hideModal());
-        document.getElementById('btnDelete').addEventListener('click', () => this.handleDeleteStory());
+setupEventListenersAfterLoad() {
+  // Логин
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+  
+  // Табы
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+  });
 
-        // Изменения в форме
-        document.getElementById('storyCategory').addEventListener('change', (e) => this.toggleCustomCategory(e));
-        document.getElementById('publishType').addEventListener('change', (e) => this.toggleScheduleFields(e));
-      }
+  // Кнопки
+  const btnNewStory = document.getElementById('btnNewStory');
+  if (btnNewStory) btnNewStory.addEventListener('click', () => this.showStoryForm());
+  
+  const btnRefresh = document.getElementById('btnRefresh');
+  if (btnRefresh) btnRefresh.addEventListener('click', () => this.loadStories());
+  
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) btnLogout.addEventListener('click', () => this.handleLogout());
+  
+  // Модалка
+  const closeModal = document.getElementById('closeModal');
+  if (closeModal) closeModal.addEventListener('click', () => this.hideModal());
+  
+  const storyForm = document.getElementById('storyForm');
+  if (storyForm) storyForm.addEventListener('submit', (e) => this.handleSaveStory(e));
+  
+  const btnCancel = document.getElementById('btnCancel');
+  if (btnCancel) btnCancel.addEventListener('click', () => this.hideModal());
+  
+  const btnDelete = document.getElementById('btnDelete');
+  if (btnDelete) btnDelete.addEventListener('click', () => this.handleDeleteStory());
+
+  // Изменения в форме
+  const storyCategory = document.getElementById('storyCategory');
+  if (storyCategory) storyCategory.addEventListener('change', (e) => this.toggleCustomCategory(e));
+  
+  const publishType = document.getElementById('publishType');
+  if (publishType) publishType.addEventListener('change', (e) => this.toggleScheduleFields(e));
+}
 
       handleLogin(e) {
         e.preventDefault();
