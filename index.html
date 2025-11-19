@@ -1,0 +1,1331 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CRAWL.STORIES — кинематографичные истории</title>
+  <style>
+    /* === ОСНОВНЫЕ СТИЛИ === */
+    :root {
+      --bg: #020205;
+      --accent: #FFE81F;
+      --muted: #9aa0a6;
+      --card: #0b0b0f;
+      --glass: rgba(255,255,255,0.03);
+      --font: "Courier New", monospace;
+      --header-height: 70px;
+      --mobile-breakpoint: 768px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: #fff;
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* === HEADER === */
+    header {
+      height: var(--header-height);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      background: linear-gradient(180deg, rgba(2,2,5,0.95), transparent);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .main-nav {
+      display: flex;
+      gap: 15px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--muted);
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover,
+    .nav-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-admin {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    /* === MAIN CONTENT === */
+    .main-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .player-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      height: 50vh;
+      min-height: 400px;
+      border-radius: 15px;
+      background: linear-gradient(180deg, #000, #05050a);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    #stars {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      perspective: 900px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .crawl-wrap {
+      width: 90%;
+      max-width: 1000px;
+      pointer-events: none;
+      transform-origin: center bottom;
+    }
+
+    pre.crawl {
+      white-space: pre;
+      line-height: 1.3;
+      text-align: center;
+      font-size: clamp(16px, 2.5vw, 24px);
+      color: var(--accent);
+      margin: 0;
+      padding: 30px 20px;
+      pointer-events: none;
+      text-shadow: 0 0 10px rgba(255,232,31,0.5);
+      font-family: var(--font);
+    }
+
+    .player-controls-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .controls-left {
+      display: flex;
+      gap: 10px;
+    }
+
+    .control-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--accent);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .control-btn:hover {
+      background: rgba(255,232,31,0.1);
+      border-color: var(--accent);
+    }
+
+    .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .speed-label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .speed-value {
+      color: var(--accent);
+      font-size: 14px;
+      min-width: 30px;
+    }
+
+    input[type="range"] {
+      width: 120px;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .episodes-section {
+      margin-top: 20px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      color: var(--accent);
+      font-size: 24px;
+    }
+
+    .episode-count {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .episodes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .episode-card {
+      background: linear-gradient(180deg, var(--card), #07070a);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.03);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .episode-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,232,31,0.2);
+      box-shadow: 0 10px 30px rgba(255,232,31,0.1);
+    }
+
+    .episode-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .episode-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .episode-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .episode-title {
+      margin: 0;
+      color: var(--accent);
+      font-size: 18px;
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .episode-badge {
+      background: rgba(255,232,31,0.1);
+      color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 10px;
+      white-space: nowrap;
+    }
+
+    .episode-desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 15px;
+    }
+
+    .episode-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .episode-date {
+      color: #7f8c8d;
+    }
+
+    .episode-status {
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .status-published {
+      background: #00c853;
+      color: white;
+    }
+
+    .status-scheduled {
+      background: #ff9800;
+      color: white;
+    }
+
+    /* === MODAL === */
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      padding: 20px;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: linear-gradient(180deg, #07070a, #05050a);
+      border-radius: 15px;
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      color: var(--accent);
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    .close-btn:hover {
+      color: var(--accent);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: #05050a;
+      color: #ddd;
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      flex: 1;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    /* === MOBILE STYLES === */
+    @media (max-width: 768px) {
+      :root {
+        --header-height: 60px;
+      }
+
+      .header-content {
+        padding: 0 15px;
+      }
+
+      header h1 {
+        font-size: 16px;
+      }
+
+      .main-nav {
+        gap: 8px;
+        overflow-x: auto;
+        padding: 10px 0;
+        justify-content: flex-start;
+      }
+
+      .nav-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+
+      .btn-admin {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .main-content {
+        padding: 15px;
+        gap: 20px;
+      }
+
+      .stage {
+        height: 40vh;
+        min-height: 300px;
+        border-radius: 10px;
+      }
+
+      pre.crawl {
+        padding: 20px 15px;
+        font-size: 16px;
+      }
+
+      .player-controls-panel {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+      }
+
+      .controls-left,
+      .controls-right {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .episodes-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+
+      .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .section-header h2 {
+        font-size: 20px;
+      }
+
+      .episode-card {
+        padding: 15px;
+      }
+
+      .episode-header {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .episode-badge {
+        align-self: flex-start;
+        margin-left: 0;
+      }
+
+      .modal {
+        padding: 10px;
+      }
+
+      .modal-content {
+        max-height: 95vh;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stage {
+        height: 35vh;
+        min-height: 250px;
+      }
+
+      pre.crawl {
+        font-size: 14px;
+        padding: 15px 10px;
+      }
+
+      .control-btn {
+        padding: 8px 16px;
+        font-size: 12px;
+      }
+
+      input[type="range"] {
+        width: 100px;
+      }
+    }
+
+    /* === ANIMATIONS === */
+    @keyframes crawl {
+      0% {
+        transform: translateY(120vh) rotateX(20deg) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-260vh) rotateX(20deg) scale(0.36);
+        opacity: 0;
+      }
+    }
+
+    @keyframes tw {
+      0% {
+        opacity: 0.15;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.12);
+      }
+      100% {
+        opacity: 0.35;
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Основное приложение -->
+  <div id="mainApp">
+    <!-- Шапка с меню -->
+    <header>
+      <div class="header-content">
+        <h1>🎬 CRAWL.STORIES</h1>
+        <nav class="main-nav" id="mainNav">
+          <!-- Меню будет генерироваться через JS -->
+        </nav>
+        <div class="header-controls">
+          <button id="btnAdmin" class="btn-admin">⚙️ Админ</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Основной контент -->
+    <main class="main-content">
+      <!-- Экран с анимацией -->
+      <section class="player-section">
+        <div id="stage" class="stage">
+          <div id="stars"></div>
+          <div class="scene">
+            <div class="crawl-wrap">
+              <pre id="crawl" class="crawl">Выбери историю из меню и эпизод из списка ниже</pre>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Панель управления -->
+        <div class="player-controls-panel">
+          <div class="controls-left">
+            <button id="play" class="control-btn">▶️ Старт</button>
+            <button id="pause" class="control-btn">⏸️ Пауза</button>
+            <button id="reset" class="control-btn">🔄 Сброс</button>
+          </div>
+          <div class="controls-right">
+            <label class="speed-label">Скорость:</label>
+            <input id="speed" type="range" min="0.25" max="2.2" step="0.05" value="1">
+            <span id="speedValue" class="speed-value">1x</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Список эпизодов -->
+      <section class="episodes-section">
+        <div class="section-header">
+          <h2 id="currentCategoryTitle">Все эпизоды</h2>
+          <div class="episode-count" id="episodeCount">0 эпизодов</div>
+        </div>
+        <div id="episodesList" class="episodes-grid">
+          <!-- Эпизоды будут здесь -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Модальное окно админ-авторизации -->
+  <div id="adminLoginModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🔐 Вход в админ-панель</h3>
+        <button id="closeAdminLogin" class="close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="adminLoginForm">
+          <div class="form-group">
+            <label>Пароль администратора</label>
+            <input type="password" id="adminPassword" required>
+            <div class="hint" id="adminPasswordHint"></div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Войти в админку</button>
+            <button type="button" id="btnGeneratePassword">Сгенерировать пароль</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно первого входа -->
+  <div id="firstTimeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>👑 Настройка админ-панели</h3>
+      </div>
+      <div class="modal-body">
+        <div class="welcome-message">
+          <p>Добро пожаловать! Это ваш первый запуск админ-панели.</p>
+          <p><strong>Создайте пароль администратора:</strong></p>
+        </div>
+        <form id="firstTimeForm">
+          <div class="form-group">
+            <label>Придумайте пароль *</label>
+            <input type="password" id="newAdminPassword" required minlength="4" 
+                   placeholder="Не менее 4 символов">
+          </div>
+          <div class="form-group">
+            <label>Подтвердите пароль *</label>
+            <input type="password" id="confirmAdminPassword" required minlength="4" 
+                   placeholder="Повторите пароль">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Создать пароль и войти</button>
+          </div>
+        </form>
+        <div class="hint">
+          ⚠️ <strong>Внимание!</strong> Этот пароль нельзя восстановить. 
+          Запишите его в надёжное место.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================== CRAWL STORIES APP ==================
+    console.log('🚀 Запускаем CRAWL.STORIES...');
+
+    // ================== AUTHENTICATION SYSTEM ==================
+    class AuthManager {
+      constructor() {
+        this.isAuthenticated = false;
+        this.isFirstTime = false;
+        this.adminPassword = null;
+        this.init();
+      }
+
+      init() {
+        this.adminPassword = localStorage.getItem('crawl_admin_password');
+        
+        if (!this.adminPassword) {
+          this.isFirstTime = true;
+          this.isAuthenticated = false;
+        } else {
+          const savedAuth = localStorage.getItem('crawl_admin_auth');
+          if (savedAuth && this.validateToken(savedAuth)) {
+            this.isAuthenticated = true;
+          } else {
+            this.isAuthenticated = false;
+          }
+        }
+      }
+
+      createPassword(password) {
+        if (!password || password.length < 4) {
+          throw new Error('Пароль должен быть не менее 4 символов');
+        }
+        
+        this.adminPassword = password;
+        localStorage.setItem('crawl_admin_password', password);
+        this.isFirstTime = false;
+        this.isAuthenticated = true;
+        
+        const token = this.generateToken();
+        localStorage.setItem('crawl_admin_auth', token);
+        
+        return true;
+      }
+
+      login(password) {
+        if (!this.adminPassword) {
+          throw new Error('Пароль администратора не настроен');
+        }
+        
+        if (password === this.adminPassword) {
+          this.isAuthenticated = true;
+          const token = this.generateToken();
+          localStorage.setItem('crawl_admin_auth', token);
+          return true;
+        }
+        return false;
+      }
+
+      logout() {
+        this.isAuthenticated = false;
+        localStorage.removeItem('crawl_admin_auth');
+      }
+
+      generateToken() {
+        return btoa(Date.now() + '_' + this.adminPassword).slice(0, 32);
+      }
+
+      validateToken(token) {
+        try {
+          const decoded = atob(token);
+          const [timestamp, password] = decoded.split('_');
+          const isValidTime = Date.now() - parseInt(timestamp) < 24 * 60 * 60 * 1000;
+          const isValidPassword = password === this.adminPassword;
+          return isValidTime && isValidPassword;
+        } catch {
+          return false;
+        }
+      }
+
+      requireAuth() {
+        return this.isAuthenticated;
+      }
+
+      showAuthModal() {
+        if (this.isFirstTime) {
+          this.showFirstTimeModal();
+        } else {
+          this.showLoginModal();
+        }
+      }
+
+      showFirstTimeModal() {
+        const modal = document.getElementById('firstTimeModal');
+        if (modal) {
+          modal.classList.add('open');
+        }
+      }
+
+      showLoginModal() {
+        const modal = document.getElementById('adminLoginModal');
+        if (modal) {
+          modal.classList.add('open');
+        }
+      }
+
+      hideAuthModal() {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => modal.classList.remove('open'));
+      }
+    }
+
+    const authManager = new AuthManager();
+
+    // ================== DATA & STORAGE ==================
+    const starterData = {
+      categories: [
+        {
+          id: 'cat_1',
+          name: 'Все эпизоды',
+          description: 'Все доступные истории',
+          icon: '⭐',
+          isDefault: true
+        },
+        {
+          id: 'cat_2', 
+          name: 'Космические саги',
+          description: 'Эпические истории о звёздах и галактиках',
+          icon: '🚀',
+          isDefault: false
+        },
+        {
+          id: 'cat_3',
+          name: 'Повседневные истории',
+          description: 'Обычные дни в необычном свете',
+          icon: '🌅',
+          isDefault: false
+        }
+      ],
+      episodes: [
+        {
+          id: 'e_' + Math.random().toString(36).slice(2, 9),
+          title: "ЭПИЗОД I — УТРО В ОРГАНИЗМЕ",
+          desc: "Небольшая зарисовка о том, как эмоции просыпаются.",
+          date: "",
+          category: 'cat_3',
+          content: `★ УТРО В ОРГАНИЗМЕ ★
+
+Дыхание медленно входит... 
+Камера проходит через городок лёгких...
+Эмоции собрались на перроне, готовые к отправке.`,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'e_' + Math.random().toString(36).slice(2, 9),
+          title: "ЭПИЗОД II — ИНСТАГРАМ ПАСХА",
+          desc: "Спецвыпуск к Пасхе — короткая история.",
+          date: "",
+          category: 'cat_3',
+          content: `Эпизод: Инстаграм Пасха
+
+Посты мелькают один за другим,
+яйца светятся, лайки — звёзды.
+Смех и свет переплетаются в одном кадре...`,
+          createdAt: new Date().toISOString()
+        }
+      ]
+    };
+
+    function genId() { 
+      return 'e_' + Math.random().toString(36).slice(2, 9); 
+    }
+
+    function loadStore() {
+      try {
+        const raw = localStorage.getItem('crawl_stories_v2');
+        if (!raw) return { ...starterData };
+        
+        const data = JSON.parse(raw);
+        
+        if (!data.categories || !data.episodes) {
+          return { 
+            categories: starterData.categories,
+            episodes: Array.isArray(data) ? data : starterData.episodes
+          };
+        }
+        
+        return data;
+      } catch (e) {
+        console.warn('Ошибка загрузки данных:', e);
+        return { ...starterData };
+      }
+    }
+
+    function saveStore(data) {
+      try {
+        localStorage.setItem('crawl_stories_v2', JSON.stringify(data));
+        return true;
+      } catch (e) {
+        console.error('Ошибка сохранения:', e);
+        return false;
+      }
+    }
+
+    function getEpisodesByCategory(data, categoryId) {
+      if (categoryId === 'cat_1') {
+        return data.episodes;
+      }
+      return data.episodes.filter(ep => ep.category === categoryId);
+    }
+
+    // ================== VISUAL EFFECTS ==================
+    function makeStars(container, count = 220) {
+      if (!container) return;
+
+      container.innerHTML = '';
+      
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        const size = (Math.random() * 2.6 + 0.7).toFixed(2);
+        star.style.width = star.style.height = size + 'px';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.opacity = (0.15 + Math.random() * 0.85).toFixed(2);
+        
+        const duration = 2 + Math.random() * 3;
+        const delay = Math.random() * 4;
+        star.style.animation = `tw ${duration}s ${delay}s infinite alternate`;
+        
+        container.appendChild(star);
+      }
+    }
+
+    function createShip() {
+      if (Math.random() > 0.25) return;
+
+      const ship = document.createElement('div');
+      ship.textContent = '|=|>';
+      ship.style.position = 'fixed';
+      ship.style.left = '-80px';
+      ship.style.top = (Math.random() * 80 + 5) + 'vh';
+      ship.style.color = 'var(--accent)';
+      ship.style.fontFamily = 'monospace';
+      ship.style.fontSize = (8 + Math.random() * 10) + 'px';
+      ship.style.zIndex = 20;
+      ship.style.pointerEvents = 'none';
+      ship.style.textShadow = '0 0 10px currentColor';
+      
+      document.body.appendChild(ship);
+
+      const duration = 2500 + Math.random() * 3000;
+      
+      ship.animate([
+        { transform: 'translateX(0) rotate(0deg)', opacity: 0 },
+        { transform: 'translateX(100px) rotate(5deg)', opacity: 1 },
+        { transform: `translateX(${window.innerWidth + 200}px) rotate(0deg)`, opacity: 0.8 }
+      ], {
+        duration: duration,
+        easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+      });
+
+      setTimeout(() => {
+        if (ship.parentNode) {
+          ship.parentNode.removeChild(ship);
+        }
+      }, duration + 200);
+    }
+
+    function initEffects() {
+      createStars();
+      startShipAnimation();
+    }
+
+    function createStars() {
+      const stageStars = document.getElementById('stars');
+      if (stageStars) makeStars(stageStars, 220);
+    }
+
+    function startShipAnimation() {
+      setInterval(createShip, 900);
+    }
+
+    // ================== PLAYER CONTROLS ==================
+    class Player {
+      constructor() {
+        this.isPlaying = false;
+        this.currentSpeed = 1;
+        this.init();
+      }
+
+      init() {
+        this.setupControls();
+        this.setupStageClick();
+      }
+
+      setupControls() {
+        document.getElementById('play')?.addEventListener('click', () => {
+          this.play();
+        });
+
+        document.getElementById('pause')?.addEventListener('click', () => {
+          this.pause();
+        });
+
+        document.getElementById('reset')?.addEventListener('click', () => {
+          this.reset();
+        });
+
+        document.getElementById('speed')?.addEventListener('input', (e) => {
+          this.setSpeed(parseFloat(e.target.value));
+        });
+      }
+
+      setupStageClick() {
+        document.getElementById('stage')?.addEventListener('click', () => {
+          this.restartAnimation();
+        });
+      }
+
+      play() {
+        const wrap = document.querySelector('.crawl-wrap');
+        if (wrap) {
+          wrap.style.animationPlayState = 'running';
+          this.isPlaying = true;
+        }
+      }
+
+      pause() {
+        const wrap = document.querySelector('.crawl-wrap');
+        if (wrap) {
+          wrap.style.animationPlayState = 'paused';
+          this.isPlaying = false;
+        }
+      }
+
+      reset() {
+        const wrap = document.querySelector('.crawl-wrap');
+        const crawl = document.getElementById('crawl');
+        
+        if (wrap && crawl) {
+          wrap.style.animation = 'none';
+          crawl.style.opacity = '1';
+          void wrap.offsetWidth;
+          this.restartAnimation();
+        }
+      }
+
+      setSpeed(speed) {
+        this.currentSpeed = speed;
+        
+        const speedValue = document.getElementById('speedValue');
+        if (speedValue) {
+          speedValue.textContent = speed.toFixed(1) + 'x';
+        }
+
+        this.restartAnimation();
+      }
+
+      restartAnimation() {
+        const wrap = document.querySelector('.crawl-wrap');
+        const crawl = document.getElementById('crawl');
+        
+        if (!wrap || !crawl) return;
+
+        const baseDuration = 120;
+        const duration = Math.max(8, baseDuration / this.currentSpeed);
+
+        wrap.style.animation = 'none';
+        void wrap.offsetWidth;
+        
+        wrap.style.animation = `crawl ${duration}s linear forwards`;
+        crawl.style.opacity = '1';
+        
+        this.isPlaying = true;
+      }
+    }
+
+    const player = new Player();
+
+    // ================== MAIN APP ==================
+    class CrawlStoriesApp {
+      constructor() {
+        this.data = null;
+        this.currentEpisode = null;
+        this.currentCategory = 'cat_1';
+        this.authManager = authManager;
+        this.player = player;
+        this.init();
+      }
+
+      async init() {
+        try {
+          this.data = loadStore();
+          this.setupEventListeners();
+          this.renderNavigation();
+          this.renderEpisodes();
+          initEffects();
+          
+          console.log('🎬 CRAWL.STORIES запущен!');
+        } catch (error) {
+          console.error('Ошибка инициализации:', error);
+        }
+      }
+
+      setupEventListeners() {
+        document.getElementById('btnAdmin')?.addEventListener('click', () => {
+          this.authManager.showAuthModal();
+        });
+
+        document.getElementById('firstTimeForm')?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.handleFirstTimeSetup();
+        });
+
+        document.getElementById('adminLoginForm')?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.handleAdminLogin();
+        });
+
+        document.getElementById('closeAdminLogin')?.addEventListener('click', () => {
+          this.authManager.hideAuthModal();
+        });
+
+        document.addEventListener('click', (e) => {
+          const episodeCard = e.target.closest('.episode-card');
+          if (episodeCard) {
+            const episodeId = episodeCard.dataset.episodeId;
+            this.openEpisode(episodeId);
+          }
+
+          const navBtn = e.target.closest('.nav-btn');
+          if (navBtn) {
+            const categoryId = navBtn.dataset.categoryId;
+            this.switchCategory(categoryId);
+          }
+        });
+      }
+
+      handleFirstTimeSetup() {
+        const password = document.getElementById('newAdminPassword').value;
+        const confirmPassword = document.getElementById('confirmAdminPassword').value;
+
+        if (password !== confirmPassword) {
+          alert('❌ Пароли не совпадают');
+          return;
+        }
+
+        if (password.length < 4) {
+          alert('❌ Пароль должен быть не менее 4 символов');
+          return;
+        }
+
+        try {
+          this.authManager.createPassword(password);
+          this.authManager.hideAuthModal();
+          alert('✅ Пароль создан! Открываю админ-панель...');
+          setTimeout(() => {
+            window.open('admin.html', '_blank');
+          }, 1000);
+        } catch (error) {
+          alert('❌ Ошибка: ' + error.message);
+        }
+      }
+
+      handleAdminLogin() {
+        const password = document.getElementById('adminPassword').value;
+        
+        try {
+          if (this.authManager.login(password)) {
+            this.authManager.hideAuthModal();
+            window.open('admin.html', '_blank');
+          } else {
+            alert('❌ Неверный пароль');
+          }
+        } catch (error) {
+          alert('❌ Ошибка: ' + error.message);
+        }
+      }
+
+      renderNavigation() {
+        const nav = document.getElementById('mainNav');
+        if (!nav) return;
+
+        nav.innerHTML = this.data.categories.map(category => `
+          <button class="nav-btn ${this.currentCategory === category.id ? 'active' : ''}" 
+                  data-category-id="${category.id}">
+            ${category.icon} ${category.name}
+          </button>
+        `).join('');
+      }
+
+      renderEpisodes() {
+        const container = document.getElementById('episodesList');
+        const countElement = document.getElementById('episodeCount');
+        const titleElement = document.getElementById('currentCategoryTitle');
+        
+        if (!container) return;
+
+        const currentCategory = this.data.categories.find(cat => cat.id === this.currentCategory);
+        const episodes = getEpisodesByCategory(this.data, this.currentCategory);
+
+        if (titleElement) {
+          titleElement.textContent = currentCategory?.name || 'Все эпизоды';
+        }
+        if (countElement) {
+          const count = episodes.length;
+          countElement.textContent = `${count} ${this.getEpisodeWord(count)}`;
+        }
+
+        container.innerHTML = episodes.map(episode => {
+          const category = this.data.categories.find(cat => cat.id === episode.category);
+          const isFuture = episode.date && new Date(episode.date) > new Date();
+          
+          return `
+            <div class="episode-card" data-episode-id="${episode.id}">
+              <div class="episode-header">
+                <h3 class="episode-title">${episode.title}</h3>
+                <span class="episode-badge">${category?.icon || '📁'} ${category?.name || 'Без категории'}</span>
+              </div>
+              <p class="episode-desc">${episode.desc || 'Описание отсутствует'}</p>
+              <div class="episode-meta">
+                <span class="episode-date">
+                  ${episode.date ? 
+                    `📅 ${new Date(episode.date).toLocaleDateString()}` : 
+                    '✅ Доступен'}
+                </span>
+                <span class="episode-status ${isFuture ? 'status-scheduled' : 'status-published'}">
+                  ${isFuture ? 'Ожидается' : 'Опубликован'}
+                </span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        if (episodes.length === 0) {
+          container.innerHTML = `
+            <div class="no-episodes" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);">
+              <div style="font-size: 48px; margin-bottom: 20px;">📺</div>
+              <h3 style="color: var(--muted); margin-bottom: 10px;">Эпизодов пока нет</h3>
+              <p>Используйте админ-панель для добавления новых эпизодов</p>
+            </div>
+          `;
+        }
+      }
+
+      getEpisodeWord(count) {
+        if (count % 10 === 1 && count % 100 !== 11) return 'эпизод';
+        if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return 'эпизода';
+        return 'эпизодов';
+      }
+
+      switchCategory(categoryId) {
+        this.currentCategory = categoryId;
+        this.renderNavigation();
+        this.renderEpisodes();
+      }
+
+      openEpisode(episodeId) {
+        const episode = this.data.episodes.find(ep => ep.id === episodeId);
+        if (!episode) return;
+
+        if (episode.date && new Date(episode.date) > new Date()) {
+          if (!confirm(`Эпизод ещё не выпущен (${new Date(episode.date).toLocaleDateString()}). Открыть сейчас?`)) {
+            return;
+          }
+        }
+
+        this.currentEpisode = episode;
+        document.getElementById('crawl').textContent = episode.content;
+        this.player.restartAnimation();
+      }
+    }
+
+    // ЗАПУСК ПРИЛОЖЕНИЯ
+    document.addEventListener('DOMContentLoaded', () => {
+      window.app = new CrawlStoriesApp();
+    });
+  </script>
+</body>
+</html>
