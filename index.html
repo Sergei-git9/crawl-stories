@@ -522,8 +522,15 @@
       }
 
       getCategoryName(category, customCategory) {
-        return customCategory || this.categories[category] || category;
-      }
+      const categories = {
+      'fantasy': '🧙 Фэнтези',
+      'sci-fi': '🚀 Научная фантастика', 
+      'horror': '👻 Хоррор',
+      'adventure': '🗺️ Приключения',
+      'mystery': '🕵️ Мистика'
+  };
+  return customCategory || categories[category] || category;
+}
 
       getTimeUntilPublish(publishDate) {
         const now = new Date();
@@ -603,54 +610,53 @@
       }
 
       renderStories() {
-        const container = document.getElementById('storiesList');
-        if (!container) return;
+  const container = document.getElementById('storiesList');
+  if (!container) return;
 
-        // Фильтруем по категории
-        let filteredStories = this.stories;
-        if (this.currentCategory !== 'all') {
-          filteredStories = this.stories.filter(story => 
-            story.category === this.currentCategory
-          );
-        }
+  // Фильтруем по категории
+  let filteredStories = this.stories;
+  if (this.currentCategory !== 'all') {
+    filteredStories = this.stories.filter(story => 
+      story.category === this.currentCategory
+    );
+  }
 
-        container.innerHTML = filteredStories.map(story => {
-          const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
-          const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
-          const displayDate = story.createdAt?.toDate ? story.createdAt.toDate() : new Date(story.createdAt);
-          
-          return `
-            <div class="story-card ${isScheduled ? 'scheduled' : ''}" data-story-id="${story.id}">
-              <div class="story-header">
-                <h3 class="story-title">${story.title}</h3>
-                <div>
-                  ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
-                  <span class="story-badge">${this.getCategoryName(story.category, story.customCategory)}</span>
-                </div>
-              </div>
-              <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
-              <div class="story-meta">
-                <span class="story-date">
-                  ${isScheduled ? 
-                    `⏰ ${this.getTimeUntilPublish(story.publishDate)}` : 
-                    `📅 ${displayDate.toLocaleDateString('ru-RU')}`
-                  }
-                </span>
-                <span class="status-published ${isScheduled ? 'scheduled' : ''}">
-                  ${isScheduled ? '🕐 Скоро' : '✅ Опубликовано'}
-                </span>
-              </div>
-              ${isScheduled ? `
-                <div class="countdown-bar">
-                  <div class="countdown-progress"></div>
-                </div>
-              ` : ''}
-            </div>
-          `;
-        }).join('');
+  container.innerHTML = filteredStories.map(story => {
+    const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
+    const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
+    
+    return `
+      <div class="story-card ${isScheduled ? 'scheduled' : ''}" data-story-id="${story.id}">
+        <div class="story-header">
+          <h3 class="story-title">${story.title}</h3>
+          <div>
+            ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
+            <span class="story-badge">${this.getCategoryName(story.category, story.customCategory)}</span>
+          </div>
+        </div>
+        <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
+        <div class="story-meta">
+          <span class="story-date">
+            ${isScheduled ? 
+              `⏰ ${this.getTimeUntilPublish(story.publishDate)}` : 
+              `📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}`
+            }
+          </span>
+          <span class="status-published ${isScheduled ? 'scheduled' : ''}">
+            ${isScheduled ? '🕐 Скоро' : '✅ Опубликовано'}
+          </span>
+        </div>
+        ${isScheduled ? `
+          <div class="countdown-bar">
+            <div class="countdown-progress"></div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
 
-        this.updateStoriesCount(filteredStories.length);
-      }
+  this.updateStoriesCount(filteredStories.length);
+}
 
       updateStoriesCount(count) {
         const countElement = document.getElementById('storiesCount');
