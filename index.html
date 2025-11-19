@@ -577,6 +577,7 @@
           'all': '📚 Все истории',
           'published': '🚀 Опубликовано',
           'scheduled': '⏰ Ожидание', 
+          'soon': '🕐 Скоро',
           'announcements': '📢 Анонсы',
           'fantasy': '🧙 Фэнтези',
           'sci-fi': '🚀 Научная фантастика', 
@@ -685,17 +686,21 @@
             id: doc.id,
             ...doc.data()
           })).filter(story => {
-            // ФИКС: Показываем только опубликованные ИЛИ запланированные с наступившей датой
+            // ФИКС: Показываем только публичные истории
+            if (story.isPublic === false) return false;
+            
+            // Показываем опубликованные
             if (story.published === true) return true;
             
+            // Показываем запланированные с таймером
             if (story.publishDate) {
               const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
-              // Показываем запланированные только если время наступило И публичные
-              return publishDate <= new Date() && story.isPublic !== false;
+              // Показываем запланированные только для таймера, даже если время еще не наступило
+              return true;
             }
             
-            // Не показываем "скоро" если они скрыты
-            return story.isPublic !== false;
+            // Показываем "скоро" для анонсов
+            return true;
           });
 
           // Загружаем анонсы
@@ -740,6 +745,10 @@
           filteredStories = this.stories.filter(story => 
             story.publishDate && new Date(story.publishDate) > new Date()
           );
+        } else if (this.currentCategory === 'soon') {
+          filteredStories = this.stories.filter(story => 
+            !story.published && !story.publishDate
+          );
         } else if (this.currentCategory !== 'all') {
           filteredStories = this.stories.filter(story => 
             story.category === this.currentCategory
@@ -761,7 +770,9 @@
         return filteredStories.map(story => {
           const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
           const isSoon = !story.published && !story.publishDate;
-          const isBlocked = isScheduled || isSoon;
+          const isPublished = story.published === true;
+          const isBlocked = !isPublished; // Блокируем все кроме опубликованных
+
           const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
           
           return `
@@ -898,13 +909,8 @@
           return;
         }
 
-        // ФИКС: Проверяем доступность истории
-        if (story.publishDate && new Date(story.publishDate) > new Date()) {
-          this.showBlockedMessage();
-          return;
-        }
-
-        if (!story.published && !story.publishDate) {
+        // ФИКС: Проверяем доступность истории - только опубликованные можно смотреть
+        if (!story.published) {
           this.showBlockedMessage();
           return;
         }
