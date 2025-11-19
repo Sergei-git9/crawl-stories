@@ -372,41 +372,41 @@
     }
 
     /* Стили для обратного отсчета */
-.story-card.scheduled {
-  border-color: #ffc107 !important;
-  background: linear-gradient(180deg, #0b0b0f, #1a1a1f) !important;
-}
+    .story-card.scheduled {
+      border-color: #ffc107 !important;
+      background: linear-gradient(180deg, #0b0b0f, #1a1a1f) !important;
+    }
 
-.status-published.scheduled {
-  background: rgba(255, 193, 7, 0.1) !important;
-  color: #ffc107 !important;
-}
+    .status-published.scheduled {
+      background: rgba(255, 193, 7, 0.1) !important;
+      color: #ffc107 !important;
+    }
 
-.countdown-bar {
-  height: 4px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 2px;
-  margin-top: 10px;
-  overflow: hidden;
-}
+    .countdown-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
 
-.countdown-progress {
-  height: 100%;
-  background: linear-gradient(90deg, #ffc107, #ff9800);
-  border-radius: 2px;
-  animation: pulse 2s infinite;
-}
+    .countdown-progress {
+      height: 100%;
+      background: linear-gradient(90deg, #ffc107, #ff9800);
+      border-radius: 2px;
+      animation: pulse 2s infinite;
+    }
 
-@keyframes pulse {
-  0% { opacity: 0.7; }
-  50% { opacity: 1; }
-  100% { opacity: 0.7; }
-}
-    
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7;
+      }
+    }
   </style>
 
   <script>
-    // ТВОЙ КОНФИГ FIREBASE
+    // Конфиг Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyANC4K0-xI-9SvrpoiOp4v-N2XLvCQCALg",
       authDomain: "crawl-stories.firebaseapp.com",
@@ -420,9 +420,8 @@
     // Инициализация Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    // Отладочная информация ← ДОБАВИЛИ ЭТИ 3 СТРОКИ
-       console.log('🔥 Firebase инициализирован');
-       console.log('📁 Project ID:', firebaseConfig.projectId);
+    console.log('🔥 Firebase инициализирован');
+    console.log('📁 Project ID:', firebaseConfig.projectId);
   </script>
 </head>
 <body>
@@ -473,183 +472,190 @@
   </div>
 
   <script>
- class PublicApp {
-    constructor() {
-    this.stories = [];
-    this.categories = [];
-    this.currentStory = null;
-    this.player = new Player();
-    this.currentCategory = 'all';
-    this.currentEpisode = null;
-    this.init();
-  }   
+    class PublicApp {
+      constructor() {
+        this.stories = [];
+        this.categories = {};
+        this.currentStory = null;
+        this.player = new Player();
+        this.currentCategory = 'all';
+        this.currentEpisode = null;
+        this.init();
+      }
 
       initCategories() {
-  this.categories = {
-    'all': '📚 Все истории',
-    'fantasy': '🧙 Фэнтези',
-    'sci-fi': '🚀 Научная фантастика', 
-    'horror': '👻 Хоррор',
-    'adventure': '🗺️ Приключения',
-    'mystery': '🕵️ Мистика'
-  };
-}
+        this.categories = {
+          'all': '📚 Все истории',
+          'fantasy': '🧙 Фэнтези',
+          'sci-fi': '🚀 Научная фантастика', 
+          'horror': '👻 Хоррор',
+          'adventure': '🗺️ Приключения',
+          'mystery': '🕵️ Мистика'
+        };
+      }
 
-   renderCategoryFilters() {
-  const nav = document.getElementById('mainNav');
-  if (!nav) return;
+      renderCategoryFilters() {
+        const nav = document.getElementById('mainNav');
+        if (!nav) return;
 
-  nav.innerHTML = Object.keys(this.categories).map(category => `
-    <button class="nav-btn ${this.currentCategory === category ? 'active' : ''}" 
-            data-category="${category}">
-      ${this.categories[category]}
-    </button>
-  `).join('');
+        nav.innerHTML = Object.keys(this.categories).map(category => `
+          <button class="nav-btn ${this.currentCategory === category ? 'active' : ''}" 
+                  data-category="${category}">
+            ${this.categories[category]}
+          </button>
+        `).join('');
 
-  // Обработчики для фильтров
-  nav.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      this.currentCategory = e.target.dataset.category;
-      this.renderCategoryFilters();
-      this.renderStories();
-    });
-  });
-}     
+        // Обновляем заголовок категории
+        const categoryTitle = document.getElementById('currentCategoryTitle');
+        if (categoryTitle) {
+          categoryTitle.textContent = this.categories[this.currentCategory];
+        }
 
-     getCategoryName(category, customCategory) {
-  return customCategory || this.categories[category] || category;
-}    
-   // После getCategoryName() добавляем:
-getTimeUntilPublish(publishDate) {
-  const now = new Date();
-  const publish = publishDate?.toDate ? publishDate.toDate() : new Date(publishDate);
-  const diff = publish - now;
-  
-  if (diff <= 0) return 'Скоро...';
-  
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  
-  if (days > 0) return `Через ${days}д ${hours}ч`;
-  if (hours > 0) return `Через ${hours}ч ${minutes}м`;
-  return `Через ${minutes}м`;
-}
+        // Обработчики для фильтров
+        nav.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            this.currentCategory = e.target.dataset.category;
+            this.renderCategoryFilters();
+            this.renderStories();
+          });
+        });
+      }
 
-// И метод для обновления отсчета каждую минуту
-startCountdownTimer() {
-  setInterval(() => {
-    this.updateCountdowns();
-  }, 60000); // Каждую минуту
-}
+      getCategoryName(category, customCategory) {
+        return customCategory || this.categories[category] || category;
+      }
 
-updateCountdowns() {
-  const storiesWithCountdown = this.stories.filter(story => 
-    story.publishDate && new Date(story.publishDate) > new Date()
-  );
-  
-  if (storiesWithCountdown.length > 0) {
-    this.renderStories(); // Перерисовываем чтобы обновить отсчет
-  }
-}
+      getTimeUntilPublish(publishDate) {
+        const now = new Date();
+        const publish = publishDate?.toDate ? publishDate.toDate() : new Date(publishDate);
+        const diff = publish - now;
+        
+        if (diff <= 0) return 'Скоро...';
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        if (days > 0) return `Через ${days}д ${hours}ч`;
+        if (hours > 0) return `Через ${hours}ч ${minutes}м`;
+        return `Через ${minutes}м`;
+      }
+
+      startCountdownTimer() {
+        setInterval(() => {
+          this.updateCountdowns();
+        }, 60000);
+      }
+
+      updateCountdowns() {
+        const storiesWithCountdown = this.stories.filter(story => 
+          story.publishDate && new Date(story.publishDate) > new Date()
+        );
+        
+        if (storiesWithCountdown.length > 0) {
+          this.renderStories();
+        }
+      }
 
       async init() {
-  await this.loadPublicData();
-  this.initCategories();
-  this.renderCategoryFilters();
-  this.setupEventListeners();
-  this.initEffects();
-  this.startCountdownTimer(); // ← ДОБАВЬ ЭТУ СТРОКУ
-  console.log('🎬 Публичное приложение запущено');
-}
+        await this.loadPublicData();
+        this.initCategories();
+        this.renderCategoryFilters();
+        this.setupEventListeners();
+        this.initEffects();
+        this.startCountdownTimer();
+        console.log('🎬 Публичное приложение запущено');
+      }
 
       async loadPublicData() {
-  try {
-    console.log('🔄 Загрузка опубликованных историй...');
-    
-    const storiesSnapshot = await db.collection('stories').get();
-    
-    this.stories = storiesSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-    .filter(story => {
-      // Показываем только опубликованные ИЛИ те, у которых наступила дата публикации
-      if (story.published === true) return true;
-      if (story.publishDate) {
-        return new Date(story.publishDate) <= new Date();
-      }
-      return false;
-    })
-    .sort((a, b) => {
-      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-      return dateB - dateA;
-    });
-
-    console.log('✅ Опубликованных историй:', this.stories.length);
-    this.updateStoriesCount();
-    this.renderStories();
-
-  } catch (error) {
-    console.error('❌ Ошибка загрузки данных:', error);
-    this.showError('Не удалось загрузить истории');
-  }
-}
-
-     renderStories() {
-  const container = document.getElementById('storiesList');
-  if (!container) return;
-
-  // Фильтруем по категории
-  let filteredStories = this.stories;
-  if (this.currentCategory !== 'all') {
-    filteredStories = this.stories.filter(story => 
-      story.category === this.currentCategory
-    );
-  }
-
-  container.innerHTML = filteredStories.map(story => {
-    const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
-    const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
-    
-    return `
-      <div class="story-card ${isScheduled ? 'scheduled' : ''}" data-story-id="${story.id}">
-        <div class="story-header">
-          <h3 class="story-title">${story.title}</h3>
-          <div>
-            ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
-            <span class="story-badge">${this.getCategoryName(story.category, story.customCategory)}</span>
-          </div>
-        </div>
-        <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
-        <div class="story-meta">
-          <span class="story-date">
-            ${isScheduled ? 
-              `⏰ ${this.getTimeUntilPublish(story.publishDate)}` : 
-              `📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}`
+        try {
+          console.log('🔄 Загрузка опубликованных историй...');
+          
+          const storiesSnapshot = await db.collection('stories').get();
+          
+          this.stories = storiesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .filter(story => {
+            // Показываем опубликованные ИЛИ те, у которых наступила/наступит дата публикации
+            if (story.published === true) return true;
+            if (story.publishDate) {
+              const publishTime = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
+              return publishTime <= new Date();
             }
-          </span>
-          <span class="status-published ${isScheduled ? 'scheduled' : ''}">
-            ${isScheduled ? '🕐 Скоро' : '✅ Опубликовано'}
-          </span>
-        </div>
-        ${isScheduled ? `
-          <div class="countdown-bar">
-            <div class="countdown-progress"></div>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
+            return false;
+          })
+          .sort((a, b) => {
+            // Сначала запланированные, потом опубликованные
+            const dateA = a.publishDate?.toDate ? a.publishDate.toDate() : new Date(a.publishDate || a.createdAt);
+            const dateB = b.publishDate?.toDate ? b.publishDate.toDate() : new Date(b.publishDate || b.createdAt);
+            return dateB - dateA;
+          });
 
-  this.updateStoriesCount(filteredStories.length);
-} 
-   
-      updateStoriesCount() {
+          console.log('✅ Загружено историй:', this.stories.length);
+          this.renderStories();
+
+        } catch (error) {
+          console.error('❌ Ошибка загрузки данных:', error);
+          this.showError('Не удалось загрузить истории');
+        }
+      }
+
+      renderStories() {
+        const container = document.getElementById('storiesList');
+        if (!container) return;
+
+        // Фильтруем по категории
+        let filteredStories = this.stories;
+        if (this.currentCategory !== 'all') {
+          filteredStories = this.stories.filter(story => 
+            story.category === this.currentCategory
+          );
+        }
+
+        container.innerHTML = filteredStories.map(story => {
+          const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
+          const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
+          const displayDate = story.createdAt?.toDate ? story.createdAt.toDate() : new Date(story.createdAt);
+          
+          return `
+            <div class="story-card ${isScheduled ? 'scheduled' : ''}" data-story-id="${story.id}">
+              <div class="story-header">
+                <h3 class="story-title">${story.title}</h3>
+                <div>
+                  ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
+                  <span class="story-badge">${this.getCategoryName(story.category, story.customCategory)}</span>
+                </div>
+              </div>
+              <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
+              <div class="story-meta">
+                <span class="story-date">
+                  ${isScheduled ? 
+                    `⏰ ${this.getTimeUntilPublish(story.publishDate)}` : 
+                    `📅 ${displayDate.toLocaleDateString('ru-RU')}`
+                  }
+                </span>
+                <span class="status-published ${isScheduled ? 'scheduled' : ''}">
+                  ${isScheduled ? '🕐 Скоро' : '✅ Опубликовано'}
+                </span>
+              </div>
+              ${isScheduled ? `
+                <div class="countdown-bar">
+                  <div class="countdown-progress"></div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+
+        this.updateStoriesCount(filteredStories.length);
+      }
+
+      updateStoriesCount(count) {
         const countElement = document.getElementById('storiesCount');
         if (countElement) {
-          countElement.textContent = `${this.stories.length} ${this.getStoriesWord(this.stories.length)}`;
+          countElement.textContent = `${count} ${this.getStoriesWord(count)}`;
         }
       }
 
@@ -675,7 +681,15 @@ updateCountdowns() {
 
       openStory(storyId) {
         const story = this.stories.find(s => s.id === storyId);
-        if (!story || !story.content) return;
+        if (!story) {
+          console.warn('История не найдена:', storyId);
+          return;
+        }
+
+        if (!story.content) {
+          console.warn('У истории нет контента:', storyId);
+          return;
+        }
 
         this.currentStory = story;
         document.getElementById('crawl').textContent = story.content;
@@ -745,40 +759,7 @@ updateCountdowns() {
           `;
         }
       }
-
-     getTimeUntilPublish(publishDate) {
-  const now = new Date();
-  const publish = publishDate?.toDate ? publishDate.toDate() : new Date(publishDate);
-  const diff = publish - now;
-  
-  if (diff <= 0) return 'Скоро...';
-  
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  
-  if (days > 0) return `Через ${days}д ${hours}ч`;
-  if (hours > 0) return `Через ${hours}ч ${minutes}м`;
-  return `Через ${minutes}м`;
-}
-
-startCountdownTimer() {
-  setInterval(() => {
-    this.updateCountdowns();
-  }, 60000);
-}
-
-updateCountdowns() {
-  const storiesWithCountdown = this.stories.filter(story => 
-    story.publishDate && new Date(story.publishDate) > new Date()
-  );
-  
-  if (storiesWithCountdown.length > 0) {
-    this.renderStories();
-  }
-}
- 
-     }
+    }
 
     class Player {
       constructor() {
@@ -796,9 +777,13 @@ updateCountdowns() {
         document.getElementById('play')?.addEventListener('click', () => this.play());
         document.getElementById('pause')?.addEventListener('click', () => this.pause());
         document.getElementById('reset')?.addEventListener('click', () => this.reset());
-        document.getElementById('speed')?.addEventListener('input', (e) => {
-          this.setSpeed(parseFloat(e.target.value));
-        });
+        
+        const speedInput = document.getElementById('speed');
+        if (speedInput) {
+          speedInput.addEventListener('input', (e) => {
+            this.setSpeed(parseFloat(e.target.value));
+          });
+        }
       }
 
       setupStageClick() {
@@ -850,6 +835,7 @@ updateCountdowns() {
         wrap.style.animation = 'none';
         void wrap.offsetWidth;
         wrap.style.animation = `crawl ${duration}s linear forwards`;
+        wrap.style.animationPlayState = 'running';
         crawl.style.opacity = '1';
         this.isPlaying = true;
       }
