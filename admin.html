@@ -31,7 +31,6 @@
       min-height: 100vh;
     }
 
-    /* ЭКРАН ВХОДА */
     .login-screen {
       min-height: 100vh;
       display: flex;
@@ -51,7 +50,6 @@
       margin-bottom: 30px;
     }
 
-    /* ФОРМЫ */
     .form-group {
       margin-bottom: 20px;
       text-align: left;
@@ -98,7 +96,6 @@
       color: var(--muted);
     }
 
-    /* КНОПКИ */
     button {
       background: var(--accent);
       color: var(--bg);
@@ -146,7 +143,6 @@
       color: white;
     }
 
-    /* ОСНОВНОЙ ИНТЕРФЕЙС */
     .admin-interface {
       display: none;
       min-height: 100vh;
@@ -169,7 +165,6 @@
       margin: 0 auto;
     }
 
-    /* ВКЛАДКИ */
     .tabs {
       display: flex;
       gap: 10px;
@@ -205,7 +200,6 @@
       display: block;
     }
 
-    /* КАРТОЧКИ ИСТОРИЙ */
     .stories-grid {
       display: grid;
       gap: 15px;
@@ -253,7 +247,6 @@
       flex-wrap: wrap;
     }
 
-    /* БЕЙДЖИ */
     .badge {
       padding: 4px 8px;
       border-radius: 6px;
@@ -288,7 +281,6 @@
       margin-top: 8px;
     }
 
-    /* МОДАЛЬНОЕ ОКНО */
     .modal {
       position: fixed;
       top: 0;
@@ -357,7 +349,6 @@
       flex-wrap: wrap;
     }
 
-    /* ГРАФИК ПУБЛИКАЦИЙ */
     .schedule-timeline {
       display: flex;
       flex-direction: column;
@@ -407,7 +398,6 @@
       margin-top: 4px;
     }
 
-    /* АНОНСЫ */
     .announcement-card {
       border-color: rgba(255,193,7,0.3) !important;
     }
@@ -423,7 +413,6 @@
       margin-top: 5px;
     }
 
-    /* ФИЛЬТРЫ */
     .filters {
       display: flex;
       gap: 10px;
@@ -449,7 +438,6 @@
       border-color: var(--accent);
     }
 
-    /* АДАПТИВНОСТЬ */
     @media (max-width: 768px) {
       .header-content {
         flex-direction: column;
@@ -512,7 +500,6 @@
 </head>
 
 <body>
-  <!-- ЭКРАН ВХОДА -->
   <div id="loginScreen" class="login-screen">
     <div class="login-card">
       <h2>🔐 Вход в админ-панель</h2>
@@ -526,7 +513,6 @@
     </div>
   </div>
 
-  <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
   <div id="adminInterface" class="admin-interface">
     <header>
       <div class="header-content">
@@ -547,7 +533,6 @@
       <button id="btnNewAnnouncement" class="btn btn-success">+ Новый анонс</button>
     </div>
 
-    <!-- Вкладка всех историй -->
     <div id="storiesTab" class="tab-content active">
       <div class="filters">
         <button class="filter-btn active" data-filter="all">Все</button>
@@ -559,12 +544,10 @@
       <div id="storiesList" class="stories-grid"></div>
     </div>
 
-    <!-- Вкладка анонсов -->
     <div id="announcementsTab" class="tab-content">
       <div id="announcementsList" class="stories-grid"></div>
     </div>
 
-    <!-- Вкладка графика -->
     <div id="scheduleTab" class="tab-content">
       <div class="timeline-header">
         <h3>📅 Запланированные публикации</h3>
@@ -574,7 +557,6 @@
     </div>
   </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ИСТОРИИ -->
   <div id="storyModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -647,7 +629,6 @@
     </div>
   </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ АНОНСА -->
   <div id="announcementModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -833,11 +814,12 @@
 
         let filteredStories = this.stories;
         
+        // ФИКС: Правильные условия фильтрации
         if (this.currentFilter === 'published') {
           filteredStories = this.stories.filter(story => story.published === true);
         } else if (this.currentFilter === 'scheduled') {
           filteredStories = this.stories.filter(story => 
-            story.publishDate && new Date(story.publishDate) > new Date()
+            story.publishDate && new Date(story.publishDate) > new Date() && !story.published
           );
         } else if (this.currentFilter === 'soon') {
           filteredStories = this.stories.filter(story => 
@@ -848,7 +830,7 @@
         }
 
         container.innerHTML = filteredStories.map(story => {
-          const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
+          const isScheduled = story.publishDate && new Date(story.publishDate) > new Date() && !story.published;
           const isSoon = !story.published && !story.publishDate;
           const isHidden = story.isPublic === false;
 
@@ -949,8 +931,9 @@
         const container = document.getElementById('scheduleList');
         if (!container) return;
 
+        // ФИКС: Правильная фильтрация запланированных историй
         const scheduledStories = this.stories
-          .filter(story => story.publishDate && new Date(story.publishDate) > new Date())
+          .filter(story => story.publishDate && new Date(story.publishDate) > new Date() && !story.published)
           .sort((a, b) => {
             const dateA = this.getPublishDate(a);
             const dateB = this.getPublishDate(b);
@@ -991,13 +974,13 @@
 
       getStatusType(story) {
         if (story.published) return 'published';
-        if (story.publishDate) return 'scheduled';
+        if (story.publishDate && new Date(story.publishDate) > new Date()) return 'scheduled';
         return 'soon';
       }
 
       getStatusText(story) {
         if (story.published) return '✅ Опубликовано';
-        if (story.publishDate) {
+        if (story.publishDate && new Date(story.publishDate) > new Date()) {
           const date = this.getStoryDate(story.publishDate);
           return `⏰ ${date.toLocaleDateString()}`;
         }
@@ -1355,7 +1338,7 @@
         try {
           const batch = db.batch();
           const scheduledStories = this.stories.filter(story => 
-            story.publishDate && new Date(story.publishDate) > new Date()
+            story.publishDate && new Date(story.publishDate) > new Date() && !story.published
           );
 
           for (const story of scheduledStories) {

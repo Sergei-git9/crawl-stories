@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
   
   <style>
+    /* СТИЛИ ОСТАЮТСЯ ТАКИМИ ЖЕ КАК В ПРЕДЫДУЩЕЙ ВЕРСИИ */
     :root {
       --bg: #020205;
       --accent: #FFE81F;
@@ -495,7 +496,6 @@
   </style>
 
   <script>
-    // Конфиг Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyANC4K0-xI-9SvrpoiOp4v-N2XLvCQCALg",
       authDomain: "crawl-stories.firebaseapp.com",
@@ -506,11 +506,9 @@
       measurementId: "G-SGC2HF0455"
     };
 
-    // Инициализация Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     console.log('🔥 Firebase инициализирован');
-    console.log('📁 Project ID:', firebaseConfig.projectId);
   </script>
 </head>
 <body>
@@ -598,13 +596,11 @@
           </button>
         `).join('');
 
-        // Обновляем заголовок категории
         const categoryTitle = document.getElementById('currentCategoryTitle');
         if (categoryTitle) {
           categoryTitle.textContent = this.categories[this.currentCategory];
         }
 
-        // Обработчики для фильтров
         nav.querySelectorAll('.nav-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             this.currentCategory = e.target.dataset.category;
@@ -644,7 +640,7 @@
       getProgressPercent(publishDate) {
         const now = new Date();
         const publish = publishDate?.toDate ? publishDate.toDate() : new Date(publishDate);
-        const total = publish - (new Date(publish.getTime() - 7 * 24 * 60 * 60 * 1000)); // неделя до публикации
+        const total = publish - (new Date(publish.getTime() - 7 * 24 * 60 * 60 * 1000));
         const passed = now - (new Date(publish.getTime() - 7 * 24 * 60 * 60 * 1000));
         return Math.min(100, Math.max(0, (passed / total) * 100));
       }
@@ -652,7 +648,7 @@
       startCountdownTimer() {
         setInterval(() => {
           this.updateCountdowns();
-        }, 30000); // Обновляем каждые 30 секунд
+        }, 30000);
       }
 
       updateCountdowns() {
@@ -679,19 +675,30 @@
         try {
           console.log('🔄 Загрузка данных...');
           
-          // Загружаем истории
           const storiesSnapshot = await db.collection('stories').get();
           
           this.stories = storiesSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
           })).filter(story => {
-            // ФИКС: Показываем только публичные истории
             if (story.isPublic === false) return false;
-            return true; // Показываем все публичные истории (опубликованные, запланированные, скоро)
+            
+            // ФИКС: Автоматически публикуем истории, у которых наступила дата публикации
+            if (story.publishDate) {
+              const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
+              const now = new Date();
+              
+              // Если дата публикации наступила - автоматически публикуем
+              if (publishDate <= now && !story.published) {
+                console.log(`🔄 Автопубликация истории: ${story.title}`);
+                this.autoPublishStory(doc.id);
+                story.published = true; // Временно для отображения
+              }
+            }
+            
+            return true;
           });
 
-          // Загружаем анонсы
           const announcementsSnapshot = await db.collection('announcements').get();
           this.announcements = announcementsSnapshot.docs.map(doc => ({
             id: doc.id,
@@ -705,6 +712,19 @@
         } catch (error) {
           console.error('❌ Ошибка загрузки данных:', error);
           this.showError('Не удалось загрузить истории');
+        }
+      }
+
+      async autoPublishStory(storyId) {
+        try {
+          await db.collection('stories').doc(storyId).update({
+            published: true,
+            publishDate: null,
+            updatedAt: new Date()
+          });
+          console.log(`✅ История ${storyId} автоматически опубликована`);
+        } catch (error) {
+          console.error('❌ Ошибка автопубликации:', error);
         }
       }
 
@@ -724,7 +744,6 @@
       }
 
       renderStories() {
-        // Фильтруем истории по категории
         let filteredStories = this.stories;
         
         if (this.currentCategory === 'published') {
@@ -899,7 +918,6 @@
           return;
         }
 
-        // ФИКС: Проверяем доступность истории - только опубликованные можно смотреть
         if (!story.published) {
           this.showBlockedMessage();
           return;
@@ -1068,7 +1086,6 @@
       }
     }
 
-    // Запуск приложения
     document.addEventListener('DOMContentLoaded', () => {
       window.app = new PublicApp();
     });
