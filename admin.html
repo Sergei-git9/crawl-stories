@@ -617,7 +617,7 @@
 
         <div class="form-group" id="scheduleGroup" style="display:none">
           <label>Дата и время публикации *</label>
-          <input type="datetime-local" name="publishDate" id="publishDate" required>
+          <input type="datetime-local" name="publishDate" id="publishDate">
         </div>
 
         <div class="form-actions">
@@ -1061,12 +1061,20 @@
       }
 
       toggleScheduleFields() {
-        const publishType = document.getElementById('publishType').value;
-        const scheduleGroup = document.getElementById('scheduleGroup');
-        if (scheduleGroup) {
-          scheduleGroup.style.display = publishType === 'scheduled' ? 'block' : 'none';
-        }
-      }
+      const publishType = document.getElementById('publishType').value;
+      const scheduleGroup = document.getElementById('scheduleGroup');
+      const publishDateInput = document.getElementById('publishDate');
+  
+       if (scheduleGroup && publishDateInput) {
+       if (publishType === 'scheduled') {
+       scheduleGroup.style.display = 'block';
+       publishDateInput.required = true; // Добавляем required только когда поле видимо
+      } else {
+      scheduleGroup.style.display = 'none';
+      publishDateInput.required = false; // Убираем required когда поле скрыто
+    }
+  }
+}
 
       formatDateTimeLocal(date) {
         return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
@@ -1126,13 +1134,23 @@
       }
 
       async handleSaveStory(e) {
-        e.preventDefault();
+      e.preventDefault();
 
-        const formData = new FormData(e.target);
-        const category = formData.get('category');
-        const publishType = formData.get('publishType');
+      const formData = new FormData(e.target);
+      const category = formData.get('category');
+      const publishType = formData.get('publishType');
 
-        const storyData = {
+           // === ДОБАВЬ ЭТОТ КУСОК КОДА ===
+          // ФИКС: Временно убираем required с скрытых полей перед валидацией
+       const publishDateInput = document.getElementById('publishDate');
+       const scheduleGroup = document.getElementById('scheduleGroup');
+  
+       if (scheduleGroup && scheduleGroup.style.display === 'none' && publishDateInput) {
+       publishDateInput.required = false;
+      }
+        // === КОНЕЦ ДОБАВЛЕННОГО КОДА ===
+
+          const storyData = {
           title: formData.get('title').trim(),
           category: category,
           customCategory: category === 'custom' ? formData.get('customCategoryName').trim() : null,
