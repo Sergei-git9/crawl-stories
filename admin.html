@@ -488,9 +488,9 @@
 
   getScheduleDate(story) {
     if (story.publishDate) {
-      const date = new Date(story.publishDate);
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    }
+  const date = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  }
     if (story.published) return 'Опубликовано';
     return 'Скоро';
   }
@@ -593,7 +593,8 @@
       storyData.publishDate = null;
     } else if (publishType === 'scheduled') {
       storyData.published = false;
-      storyData.publishDate = new Date(formData.get('publishDate'));
+      const dateString = formData.get('publishDate');
+      storyData.publishDate = new Date(dateString + 'Z'); // Добавляем Z для UTC
     } else { // soon
       storyData.published = false;
       storyData.publishDate = null;
