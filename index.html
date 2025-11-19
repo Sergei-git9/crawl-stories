@@ -1,91 +1,373 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CRAWL.STORIES — улучшенная версия</title>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CRAWL.STORIES — кинематографичные истории</title>
+  
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-
+  
   <style>
     :root {
       --bg: #020205;
       --accent: #FFE81F;
       --muted: #9aa0a6;
       --card: #0b0b0f;
+      --glass: rgba(255,255,255,0.03);
       --font: "Courier New", monospace;
       --header-height: 70px;
     }
 
     * { box-sizing: border-box; }
-    html, body { height:100%; margin:0; background: var(--bg); color:#fff; font-family: var(--font); -webkit-font-smoothing: antialiased; }
 
-    header { height: var(--header-height); border-bottom:1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(2,2,5,0.95), transparent); backdrop-filter:blur(10px); position: sticky; top:0; z-index:100; }
-    .header-content { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:100%; max-width:1400px; margin:0 auto; }
-    header h1 { margin:0; font-size:20px; color:var(--accent); letter-spacing:1px; text-shadow:0 0 6px rgba(255,232,31,0.5); }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: #fff;
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
 
-    .main-nav { display:flex; gap:15px; flex:1; justify-content:center; overflow-x:auto; }
-    .nav-btn { background:transparent; border:1px solid rgba(255,255,255,0.1); color:var(--muted); padding:8px 16px; border-radius:20px; cursor:pointer; transition:all 0.3s ease; font-size:14px; white-space:nowrap; }
-    .nav-btn:hover, .nav-btn.active { background:var(--accent); color:var(--bg); border-color:var(--accent); box-shadow:0 0 15px rgba(255,232,31,0.4); }
+    header {
+      height: var(--header-height);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      background: linear-gradient(180deg, rgba(2,2,5,0.95), transparent);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-    .btn-admin { background:var(--accent); color:var(--bg); border:none; padding:8px 16px; border-radius:20px; cursor:pointer; font-weight:bold; font-size:14px; }
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
 
-    .main-content { max-width:1400px; margin:0 auto; padding:20px; display:flex; flex-direction:column; gap:30px; }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
 
-    .player-section { display:flex; flex-direction:column; gap:15px; }
-    .stage { position:relative; overflow:hidden; height:50vh; min-height:400px; border-radius:15px; background: linear-gradient(180deg,#000,#05050a); border:1px solid rgba(255,255,255,0.05); }
-    #stars { position:absolute; inset:0; z-index:0; pointer-events:none; }
-    .star { position:absolute; background:#fff; border-radius:50%; pointer-events:none; }
+    .main-nav {
+      display: flex;
+      gap: 15px;
+      flex: 1;
+      justify-content: center;
+    }
 
-    .scene { position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center; perspective:900px; z-index:2; pointer-events:none; }
-    .crawl-wrap { width:90%; max-width:1000px; pointer-events:none; transform-origin:center bottom; }
-    pre.crawl { white-space:pre; line-height:1.3; text-align:center; font-size:clamp(16px,2.5vw,24px); color:var(--accent); margin:0; padding:30px 20px; pointer-events:none; text-shadow:0 0 10px rgba(255,232,31,0.5); }
+    .nav-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--muted);
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      white-space: nowrap;
+    }
 
-    .player-controls-panel { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; background:var(--card); border-radius:10px; border:1px solid rgba(255,255,255,0.03); }
-    .control-btn { background:transparent; border:1px solid rgba(255,255,255,0.1); color:var(--accent); padding:10px 20px; border-radius:8px; cursor:pointer; transition:all 0.3s ease; font-size:14px; }
-    .control-btn:hover { background: rgba(255,232,31,0.1); border-color: var(--accent); transform:translateY(-2px); }
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
 
-    .controls-left, .controls-right { display:flex; align-items:center; gap:10px; }
-    .speed-label { color:var(--muted); font-size:14px; }
-    .speed-value { color:var(--accent); font-size:14px; min-width:30px; }
-    input[type=range] { width:120px; height:4px; background: rgba(255,255,255,0.1); border-radius:2px; outline:none; -webkit-appearance:none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; background:var(--accent); border-radius:50%; cursor:pointer; }
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
 
-    .stories-section { margin-top:20px; }
-    .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-    .section-header h2 { margin:0; color:var(--accent); font-size:24px; text-shadow:0 0 5px rgba(255,232,31,0.4); }
-    .stories-count { color:var(--muted); font-size:14px; }
+    .btn-admin {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
 
-    .stories-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
-    .story-card { background: linear-gradient(180deg,var(--card),#07070a); border-radius:12px; padding:20px; border:1px solid rgba(255,255,255,0.03); cursor:pointer; transition:all 0.3s ease; position:relative; overflow:hidden; }
-    .story-card:hover { transform:translateY(-5px); border-color:rgba(255,232,31,0.2); box-shadow:0 10px 30px rgba(255,232,31,0.1); }
-    .story-card.blocked { cursor:not-allowed; opacity:0.7; }
-    .story-card.blocked:hover { transform:none; border-color:rgba(255,255,255,0.03); box-shadow:none; }
+    .main-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
 
-    .story-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
-    .story-title { margin:0; color:var(--accent); font-size:18px; line-height:1.3; flex:1; text-shadow:0 0 6px rgba(255,232,31,0.4); }
-    .story-badge { background: rgba(255,232,31,0.1); color:var(--accent); padding:4px 8px; border-radius:12px; font-size:11px; font-weight:bold; margin-left:10px; white-space:nowrap; }
-    .story-badge.scheduled { background: rgba(255,193,7,0.1); color:#ffc107; }
-    .story-badge.soon { background: rgba(158,158,158,0.1); color:#9e9e9e; }
+    .player-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
 
-    .story-desc { color:var(--muted); font-size:14px; line-height:1.4; margin-bottom:15px; }
+    .stage {
+      position: relative;
+      overflow: hidden;
+      height: 50vh;
+      min-height: 400px;
+      border-radius: 15px;
+      background: linear-gradient(180deg, #000, #05050a);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
 
-    .blocked-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(2,2,5,0.8); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s ease; backdrop-filter:blur(2px); }
-    .story-card.blocked:hover .blocked-overlay { opacity:1; }
-    .blocked-message { text-align:center; padding:20px; color:var(--accent); }
+    #stars {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
 
-    .countdown-bar { height:4px; background: rgba(255,255,255,0.1); border-radius:2px; margin-top:10px; overflow:hidden; }
-    .countdown-progress { height:100%; background: linear-gradient(90deg,#ffc107,#ff9800); border-radius:2px; animation:pulse 2s infinite; }
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      pointer-events: none;
+    }
 
-    @keyframes crawl { 0% { transform: translateY(120vh) rotateX(20deg) scale(1); opacity:1; } 100% { transform: translateY(-260vh) rotateX(20deg) scale(0.36); opacity:0; } }
-    @keyframes pulse { 0%{opacity:0.7;}50%{opacity:1;}100%{opacity:0.7;} }
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      perspective: 900px;
+      z-index: 2;
+      pointer-events: none;
+    }
 
-    @media(max-width:768px){ :root {--header-height:60px;} .header-content{padding:0 15px;} header h1{font-size:16px;} .main-nav{gap:8px; padding:10px 0; justify-content:flex-start;} .nav-btn{padding:6px 12px; font-size:12px;} .btn-admin{padding:6px 12px; font-size:12px;} .main-content{padding:15px; gap:20px;} .stage{height:40vh; min-height:300px; border-radius:10px;} pre.crawl{padding:20px 15px; font-size:16px;} .player-controls-panel{flex-direction:column; gap:15px; padding:15px;} .controls-left,.controls-right{width:100%; justify-content:center;} .stories-grid{grid-template-columns:1fr; gap:15px;} .section-header{flex-direction:column; align-items:flex-start; gap:10px;} .section-header h2{font-size:20px;} .story-card{padding:15px;} .story-header{flex-direction:column; gap:8px;} .story-badge{align-self:flex-start; margin-left:0;} }
+    .crawl-wrap {
+      width: 90%;
+      max-width: 1000px;
+      pointer-events: none;
+      transform-origin: center bottom;
+    }
+
+    pre.crawl {
+      white-space: pre;
+      line-height: 1.3;
+      text-align: center;
+      font-size: clamp(16px, 2.5vw, 24px);
+      color: var(--accent);
+      margin: 0;
+      padding: 30px 20px;
+      pointer-events: none;
+      text-shadow: 0 0 10px rgba(255,232,31,0.5);
+      font-family: var(--font);
+    }
+
+    .player-controls-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .controls-left {
+      display: flex;
+      gap: 10px;
+    }
+
+    .control-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--accent);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .control-btn:hover {
+      background: rgba(255,232,31,0.1);
+      border-color: var(--accent);
+    }
+
+    .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .speed-label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .speed-value {
+      color: var(--accent);
+      font-size: 14px;
+      min-width: 30px;
+    }
+
+    input[type="range"] {
+      width: 120px;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .stories-section {
+      margin-top: 20px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      color: var(--accent);
+      font-size: 24px;
+    }
+
+    .stories-count {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .stories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .story-card {
+      background: linear-gradient(180deg, var(--card), #07070a);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.03);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .story-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,232,31,0.2);
+      box-shadow: 0 10px 30px rgba(255,232,31,0.1);
+    }
+
+    .story-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .story-title {
+      margin: 0;
+      color: var(--accent);
+      font-size: 18px;
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .story-badge {
+      background: rgba(255,232,31,0.1);
+      color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 10px;
+      white-space: nowrap;
+    }
+
+    .story-desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 15px;
+    }
+
+    .story-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .story-date {
+      color: #7f8c8d;
+    }
+
+    .status-published {
+      background: #00c853;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    @keyframes crawl {
+      0% { transform: translateY(120vh) rotateX(20deg) scale(1); opacity: 1; }
+      100% { transform: translateY(-260vh) rotateX(20deg) scale(0.36); opacity: 0; }
+    }
+
+    @keyframes tw {
+      0% { opacity: 0.15; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.12); }
+      100% { opacity: 0.35; transform: scale(1); }
+    }
+
+    @media (max-width: 768px) {
+      :root { --header-height: 60px; }
+      .header-content { padding: 0 15px; }
+      header h1 { font-size: 16px; }
+      .main-nav { gap: 8px; overflow-x: auto; padding: 10px 0; justify-content: flex-start; }
+      .nav-btn { padding: 6px 12px; font-size: 12px; flex-shrink: 0; }
+      .btn-admin { padding: 6px 12px; font-size: 12px; }
+      .main-content { padding: 15px; gap: 20px; }
+      .stage { height: 40vh; min-height: 300px; border-radius: 10px; }
+      pre.crawl { padding: 20px 15px; font-size: 16px; }
+      .player-controls-panel { flex-direction: column; gap: 15px; padding: 15px; }
+      .controls-left, .controls-right { width: 100%; justify-content: center; }
+      .stories-grid { grid-template-columns: 1fr; gap: 15px; }
+      .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .section-header h2 { font-size: 20px; }
+      .story-card { padding: 15px; }
+      .story-header { flex-direction: column; gap: 8px; }
+      .story-badge { align-self: flex-start; margin-left: 0; }
+    }
   </style>
 
   <script>
+    // ТВОЙ КОНФИГ FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyANC4K0-xI-9SvrpoiOp4v-N2XLvCQCALg",
       authDomain: "crawl-stories.firebaseapp.com",
@@ -95,9 +377,13 @@
       appId: "1:886479757650:web:194ad1dd2d02c959bdda8b",
       measurementId: "G-SGC2HF0455"
     };
+
+    // Инициализация Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    console.log('🔥 Firebase инициализирован');
+    // Отладочная информация ← ДОБАВИЛИ ЭТИ 3 СТРОКИ
+       console.log('🔥 Firebase инициализирован');
+       console.log('📁 Project ID:', firebaseConfig.projectId);
   </script>
 </head>
 <body>
@@ -122,7 +408,7 @@
             </div>
           </div>
         </div>
-
+        
         <div class="player-controls-panel">
           <div class="controls-left">
             <button id="play" class="control-btn">▶️ Старт</button>
@@ -147,6 +433,264 @@
     </main>
   </div>
 
-  <script src="/mnt/data/index_1.html"></script>
+  <script>
+    class PublicApp {
+      constructor() {
+        this.stories = [];
+        this.categories = [];
+        this.currentStory = null;
+        this.player = new Player();
+        this.init();
+      }
+
+      async init() {
+        await this.loadPublicData();
+        this.setupEventListeners();
+        this.renderStories();
+        this.initEffects();
+        console.log('🎬 Публичное приложение запущено');
+      }
+
+      async loadPublicData() {
+  try {
+    console.log('🔄 Загрузка опубликованных историй...');
+    
+    // ОПТИМАЛЬНЫЙ ЗАПРОС (индекс готов!)
+    const storiesSnapshot = await db.collection('stories')
+      .where('published', '==', true)
+      .orderBy('createdAt', 'desc')
+      .get();
+    
+    console.log('📊 Найдено документов:', storiesSnapshot.size);
+    
+    this.stories = storiesSnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log(`📖 История "${data.title}":`, data);
+      return {
+        id: doc.id,
+        ...data
+      };
+    });
+
+    console.log('✅ Опубликованных историй:', this.stories.length);
+    this.updateStoriesCount();
+    this.renderStories();
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки данных:', error);
+    this.showError('Не удалось загрузить истории: ' + error.message);
+  }
+}
+
+      renderStories() {
+        const container = document.getElementById('storiesList');
+        if (!container) return;
+
+        container.innerHTML = this.stories.map(story => `
+          <div class="story-card" data-story-id="${story.id}">
+            <div class="story-header">
+              <h3 class="story-title">${story.title}</h3>
+              <span class="story-badge">${story.episodesCount || 0} эп.</span>
+            </div>
+            <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
+            <div class="story-meta">
+              <span class="story-date">📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}</span>
+              <span class="status-published">Опубликовано</span>
+            </div>
+          </div>
+        `).join('');
+
+        if (this.stories.length === 0) {
+          container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);">
+              <div style="font-size: 48px; margin-bottom: 20px;">📺</div>
+              <h3 style="color: var(--muted); margin-bottom: 10px;">Историй пока нет</h3>
+              <p>Администратор ещё не добавил ни одной истории</p>
+            </div>
+          `;
+        }
+      }
+
+      updateStoriesCount() {
+        const countElement = document.getElementById('storiesCount');
+        if (countElement) {
+          countElement.textContent = `${this.stories.length} ${this.getStoriesWord(this.stories.length)}`;
+        }
+      }
+
+      getStoriesWord(count) {
+        if (count % 10 === 1 && count % 100 !== 11) return 'история';
+        if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return 'истории';
+        return 'историй';
+      }
+
+      setupEventListeners() {
+        document.getElementById('btnAdmin')?.addEventListener('click', () => {
+          window.open('admin.html', '_blank');
+        });
+
+        document.addEventListener('click', (e) => {
+          const storyCard = e.target.closest('.story-card');
+          if (storyCard) {
+            const storyId = storyCard.dataset.storyId;
+            this.openStory(storyId);
+          }
+        });
+      }
+
+      openStory(storyId) {
+        const story = this.stories.find(s => s.id === storyId);
+        if (!story || !story.content) return;
+
+        this.currentStory = story;
+        document.getElementById('crawl').textContent = story.content;
+        this.player.restartAnimation();
+      }
+
+      initEffects() {
+        this.createStars();
+        this.startShipAnimation();
+      }
+
+      createStars() {
+        const container = document.getElementById('stars');
+        if (!container) return;
+
+        container.innerHTML = '';
+        for (let i = 0; i < 220; i++) {
+          const star = document.createElement('div');
+          star.className = 'star';
+          const size = (Math.random() * 2.6 + 0.7).toFixed(2);
+          star.style.width = star.style.height = size + 'px';
+          star.style.left = Math.random() * 100 + '%';
+          star.style.top = Math.random() * 100 + '%';
+          star.style.opacity = (0.15 + Math.random() * 0.85).toFixed(2);
+          const duration = 2 + Math.random() * 3;
+          const delay = Math.random() * 4;
+          star.style.animation = `tw ${duration}s ${delay}s infinite alternate`;
+          container.appendChild(star);
+        }
+      }
+
+      startShipAnimation() {
+        setInterval(() => {
+          if (Math.random() > 0.25) return;
+          const ship = document.createElement('div');
+          ship.textContent = '|=|>';
+          ship.style.position = 'fixed';
+          ship.style.left = '-80px';
+          ship.style.top = (Math.random() * 80 + 5) + 'vh';
+          ship.style.color = 'var(--accent)';
+          ship.style.fontFamily = 'monospace';
+          ship.style.fontSize = (8 + Math.random() * 10) + 'px';
+          ship.style.zIndex = '20';
+          ship.style.pointerEvents = 'none';
+          document.body.appendChild(ship);
+
+          const duration = 2500 + Math.random() * 3000;
+          ship.animate([
+            { transform: 'translateX(0) rotate(0deg)', opacity: 0 },
+            { transform: 'translateX(100px) rotate(5deg)', opacity: 1 },
+            { transform: `translateX(${window.innerWidth + 200}px) rotate(0deg)`, opacity: 0.8 }
+          ], { duration: duration, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' });
+
+          setTimeout(() => ship.remove(), duration + 200);
+        }, 900);
+      }
+
+      showError(message) {
+        const container = document.getElementById('storiesList');
+        if (container) {
+          container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff6b6b;">
+              <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+              <h3 style="margin-bottom: 10px;">Ошибка загрузки</h3>
+              <p>${message}</p>
+            </div>
+          `;
+        }
+      }
+    }
+
+    class Player {
+      constructor() {
+        this.isPlaying = false;
+        this.currentSpeed = 1;
+        this.init();
+      }
+
+      init() {
+        this.setupControls();
+        this.setupStageClick();
+      }
+
+      setupControls() {
+        document.getElementById('play')?.addEventListener('click', () => this.play());
+        document.getElementById('pause')?.addEventListener('click', () => this.pause());
+        document.getElementById('reset')?.addEventListener('click', () => this.reset());
+        document.getElementById('speed')?.addEventListener('input', (e) => {
+          this.setSpeed(parseFloat(e.target.value));
+        });
+      }
+
+      setupStageClick() {
+        document.getElementById('stage')?.addEventListener('click', () => {
+          this.restartAnimation();
+        });
+      }
+
+      play() {
+        const wrap = document.querySelector('.crawl-wrap');
+        if (wrap) {
+          wrap.style.animationPlayState = 'running';
+          this.isPlaying = true;
+        }
+      }
+
+      pause() {
+        const wrap = document.querySelector('.crawl-wrap');
+        if (wrap) {
+          wrap.style.animationPlayState = 'paused';
+          this.isPlaying = false;
+        }
+      }
+
+      reset() {
+        const wrap = document.querySelector('.crawl-wrap');
+        const crawl = document.getElementById('crawl');
+        if (wrap && crawl) {
+          wrap.style.animation = 'none';
+          crawl.style.opacity = '1';
+          void wrap.offsetWidth;
+          this.restartAnimation();
+        }
+      }
+
+      setSpeed(speed) {
+        this.currentSpeed = speed;
+        const speedValue = document.getElementById('speedValue');
+        if (speedValue) speedValue.textContent = speed.toFixed(1) + 'x';
+        this.restartAnimation();
+      }
+
+      restartAnimation() {
+        const wrap = document.querySelector('.crawl-wrap');
+        const crawl = document.getElementById('crawl');
+        if (!wrap || !crawl) return;
+
+        const duration = Math.max(8, 120 / this.currentSpeed);
+        wrap.style.animation = 'none';
+        void wrap.offsetWidth;
+        wrap.style.animation = `crawl ${duration}s linear forwards`;
+        crawl.style.opacity = '1';
+        this.isPlaying = true;
+      }
+    }
+
+    // Запуск приложения
+    document.addEventListener('DOMContentLoaded', () => {
+      window.app = new PublicApp();
+    });
+  </script>
 </body>
 </html>
