@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Админ-панель CRAWL.STORIES</title>
+  <style>
+    /* === ОСНОВНЫЕ СТИЛИ === */
+    :root {
+      --bg: #020205;
+      --accent: #FFE81F;
+      --muted: #9aa0a6;
+      --card: #0b0b0f;
+      --glass: rgba(255,255,255,0.03);
+      --font: "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: #fff;
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* === HEADER === */
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      background: linear-gradient(180deg, rgba(2,2,5,0.95), transparent);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      color: var(--accent);
+    }
+
+    .admin-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* === КНОПКИ === */
+    button {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--accent);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: var(--font);
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: rgba(255,232,31,0.1);
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      font-weight: bold;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .btn-danger {
+      background: #ff4444;
+      color: white;
+      border: none;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* === ОСНОВНОЙ КОНТЕНТ === */
+    .admin-main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* === СТАТИСТИКА === */
+    .admin-stats-section {
+      margin-bottom: 30px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .stat-card {
+      background: linear-gradient(180deg, var(--card), #07070a);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.03);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      font-size: 32px;
+    }
+
+    .stat-content {
+      flex: 1;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    /* === СЕКЦИИ УПРАВЛЕНИЯ === */
+    .management-section {
+      margin-bottom: 40px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      color: var(--accent);
+      font-size: 24px;
+    }
+
+    /* === КАТЕГОРИИ === */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .category-card {
+      background: linear-gradient(180deg, var(--card), #07070a);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.03);
+      transition: all 0.3s ease;
+    }
+
+    .category-card:hover {
+      border-color: rgba(255,232,31,0.2);
+      transform: translateY(-2px);
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .category-icon {
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,232,31,0.1);
+      border-radius: 10px;
+    }
+
+    .category-info {
+      flex: 1;
+    }
+
+    .category-name {
+      margin: 0;
+      color: var(--accent);
+      font-size: 18px;
+    }
+
+    .category-desc {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 5px 0 0 0;
+    }
+
+    .category-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .episode-count {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .category-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* === ЭПИЗОДЫ === */
+    .episodes-controls {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group, .search-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-group label, .search-group label {
+      margin-bottom: 0;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .filter-group select, .search-group input {
+      min-width: 200px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: #05050a;
+      color: #ddd;
+      font-family: var(--font);
+    }
+
+    .search-group input {
+      min-width: 250px;
+    }
+
+    .episodes-list-admin {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .episode-item-admin {
+      background: linear-gradient(180deg, var(--card), #07070a);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.03);
+      transition: all 0.3s ease;
+    }
+
+    .episode-item-admin:hover {
+      border-color: rgba(255,232,31,0.2);
+    }
+
+    .episode-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .episode-item-title {
+      margin: 0;
+      color: var(--accent);
+      font-size: 18px;
+      flex: 1;
+    }
+
+    .episode-item-meta {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .episode-category-badge {
+      background: rgba(255,232,31,0.1);
+      color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .episode-date-badge {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .episode-item-desc {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 15px;
+      line-height: 1.4;
+    }
+
+    .episode-item-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    /* === МОДАЛЬНЫЕ ОКНА === */
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      padding: 20px;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: linear-gradient(180deg, #07070a, #05050a);
+      border-radius: 15px;
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .large-modal {
+      max-width: 800px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      color: var(--accent);
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    .close-btn:hover {
+      color: var(--accent);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    /* === ФОРМЫ === */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: #05050a;
+      color: #ddd;
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    /* === ИКОНКИ === */
+    .icons-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .icon-option {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.3s ease;
+    }
+
+    .icon-option:hover {
+      background: rgba(255,232,31,0.1);
+      border-color: var(--accent);
+    }
+
+    .icon-option.selected {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    /* === ЛОГИН СКРИН === */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      padding: 20px;
+    }
+
+    .login-card {
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .login-card h2 {
+      color: var(--accent);
+      margin-bottom: 30px;
+    }
+
+    /* === АДАПТИВНОСТЬ === */
+    @media (max-width: 768px) {
+      .admin-main {
+        padding: 15px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+
+      .section-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+      }
+
+      .categories-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .episodes-controls {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .filter-group select, 
+      .search-group input {
+        min-width: auto;
+        width: 100%;
+      }
+
+      .episode-item-header {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .episode-item-meta {
+        align-self: flex-start;
+      }
+
+      .episode-item-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .admin-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .icons-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .large-modal {
+        margin: 10px;
+        max-width: calc(100vw - 20px);
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-card {
+        text-align: center;
+        flex-direction: column;
+      }
+
+      .icons-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="adminApp">
+    <!-- Экран входа -->
+    <div id="loginScreen" class="login-screen">
+      <div class="login-card card">
+        <h2>🔐 Вход в админ-панель</h2>
+        <form id="loginForm">
+          <div class="form-group">
+            <label>Пароль администратора</label>
+            <input type="password" id="adminPassword" required>
+            <div class="hint">Введите пароль, который вы создали в основной панели</div>
+          </div>
+          <button type="submit" class="btn-primary">Войти в админку</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Основной интерфейс админки -->
+    <div id="adminInterface" class="admin-interface" style="display:none">
+      <header>
+        <div class="header-content">
+          <h1>⚙️ АДМИН-ПАНЕЛЬ CRAWL.STORIES</h1>
+          <div class="admin-controls">
+            <button id="btnRefresh" class="btn-secondary">🔄 Обновить</button>
+            <button id="btnLogout" class="btn-secondary">🚪 Выйти</button>
+            <button id="btnBackToSite" class="btn-primary">🌐 На сайт</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="admin-main">
+        <!-- Статистика -->
+        <section class="admin-stats-section">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">📊</div>
+              <div class="stat-content">
+                <div class="stat-number" id="totalEpisodes">0</div>
+                <div class="stat-label">Всего эпизодов</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📁</div>
+              <div class="stat-content">
+                <div class="stat-number" id="totalCategories">0</div>
+                <div class="stat-label">Категорий</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-content">
+                <div class="stat-number" id="publishedEpisodes">0</div>
+                <div class="stat-label">Опубликовано</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⏳</div>
+              <div class="stat-content">
+                <div class="stat-number" id="scheduledEpisodes">0</div>
+                <div class="stat-label">Запланировано</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Управление категориями -->
+        <section class="management-section">
+          <div class="section-header">
+            <h2>📂 Управление категориями</h2>
+            <button id="btnNewCategory" class="btn-primary">+ Новая категория</button>
+          </div>
+          
+          <div id="categoriesList" class="categories-grid">
+            <!-- Категории будут здесь -->
+          </div>
+        </section>
+
+        <!-- Управление эпизодами -->
+        <section class="management-section">
+          <div class="section-header">
+            <h2>🎬 Управление эпизодами</h2>
+            <button id="btnNewEpisode" class="btn-primary">+ Новый эпизод</button>
+          </div>
+          
+          <div class="episodes-controls">
+            <div class="filter-group">
+              <label>Фильтр по категории:</label>
+              <select id="categoryFilter">
+                <option value="all">Все категории</option>
+              </select>
+            </div>
+            <div class="search-group">
+              <input type="text" id="episodeSearch" placeholder="Поиск эпизодов...">
+            </div>
+          </div>
+          
+          <div id="episodeListAdmin" class="episodes-list-admin">
+            <!-- Эпизоды будут здесь -->
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Модальное окно редактирования категории -->
+  <div id="categoryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="categoryModalTitle">Новая категория</h3>
+        <button id="closeCategoryModal" class="close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="categoryEditForm">
+          <div class="form-group">
+            <label>Название категории *</label>
+            <input type="text" id="categoryName" required placeholder="Например: Космические саги">
+          </div>
+          <div class="form-group">
+            <label>Описание</label>
+            <textarea id="categoryDesc" rows="3" placeholder="Описание категории..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Иконка</label>
+            <div class="icons-grid" id="iconsGrid">
+              <!-- Иконки будут добавлены через JS -->
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Сохранить категорию</button>
+            <button type="button" id="btnCancelCategory" class="btn-secondary">Отмена</button>
+            <button type="button" id="btnDeleteCategory" class="btn-danger" style="display:none">Удалить категорию</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно редактирования эпизода -->
+  <div id="episodeModal" class="modal">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <h3 id="episodeModalTitle">Новый эпизод</h3>
+        <button id="closeEpisodeModal" class="close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="episodeEditForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Название эпизода *</label>
+              <input type="text" id="editTitle" required placeholder="ЭПИЗОД I — Название">
+            </div>
+            <div class="form-group">
+              <label>Категория *</label>
+              <select id="editCategory" required>
+                <option value="">Выберите категорию</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Описание</label>
+              <input type="text" id="editDesc" placeholder="Краткое описание эпизода">
+            </div>
+            <div class="form-group">
+              <label>Дата релиза</label>
+              <input type="date" id="editDate">
+              <div class="hint">Оставьте пустым для немедленной публикации</div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Контент (текст для анимации) *</label>
+            <textarea id="editContent" rows="12" required placeholder="Текст который будет показываться в виде титров..."></textarea>
+            <div class="hint">
+              💡 Советы:<br>
+              • Используйте заглавные буквы для заголовков<br>
+              • Пустые строки создают паузы<br>
+              • Символы ★ ✦ ✶ хорошо смотрятся в анимации
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Сохранить эпизод</button>
+            <button type="button" id="btnCancelEdit" class="btn-secondary">Отмена</button>
+            <button type="button" id="btnDeleteEpisode" class="btn-danger" style="display:none">Удалить эпизод</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================== АДМИН-ПАНЕЛЬ ==================
+    console.log('⚙️ Загружаем админ-панель...');
+
+    class AdminPanel {
+      constructor() {
+        this.data = null;
+        this.currentEditingId = null;
+        this.currentEditingType = null;
+        this.selectedIcon = '📁';
+        this.availableIcons = ['📁', '🚀', '⭐', '🎬', '🌌', '📚', '🎭', '🔮', '🌟', '✨', '🌠', '📖', '🎪', '🔭', '👑', '💫'];
+        this.init();
+      }
+
+      init() {
+        // Проверяем авторизацию
+        if (!this.checkAuth()) {
+          this.showLoginScreen();
+          return;
+        }
+
+        this.loadData();
+        this.setupEventListeners();
+        this.showAdminInterface();
+        this.renderStats();
+        this.renderCategories();
+        this.renderEpisodes();
+        this.setupIconsGrid();
+      }
+
+      checkAuth() {
+        const password = localStorage.getItem('crawl_admin_password');
+        const authToken = localStorage.getItem('crawl_admin_auth');
+        
+        if (!password) {
+          alert('❌ Пароль администратора не настроен. Сначала создайте пароль в основной панели.');
+          return false;
+        }
+
+        // Простая проверка токена (можно улучшить)
+        if (!authToken) {
+          return false;
+        }
+
+        return true;
+      }
+
+      loadData() {
+        try {
+          const raw = localStorage.getItem('crawl_stories_v2');
+          this.data = raw ? JSON.parse(raw) : {
+            categories: [
+              {
+                id: 'cat_1',
+                name: 'Все эпизоды',
+                description: 'Все доступные истории',
+                icon: '⭐',
+                isDefault: true
+              }
+            ],
+            episodes: []
+          };
+        } catch (e) {
+          console.error('Ошибка загрузки данных:', e);
+          this.data = {
+            categories: [
+              {
+                id: 'cat_1',
+                name: 'Все эпизоды',
+                description: 'Все доступные истории',
+                icon: '⭐',
+                isDefault: true
+              }
+            ],
+            episodes: []
+          };
+        }
+      }
+
+      saveData() {
+        try {
+          localStorage.setItem('crawl_stories_v2', JSON.stringify(this.data));
+          return true;
+        } catch (e) {
+          console.error('Ошибка сохранения:', e);
+          return false;
+        }
+      }
+
+      setupEventListeners() {
+        // Форма входа
+        document.getElementById('loginForm')?.addEventListener('submit', (e) => this.handleLogin(e));
+        
+        // Кнопки управления
+        document.getElementById('btnRefresh')?.addEventListener('click', () => this.refreshData());
+        document.getElementById('btnLogout')?.addEventListener('click', () => this.handleLogout());
+        document.getElementById('btnBackToSite')?.addEventListener('click', () => window.location.href = 'index.html');
+        
+        // Создание контента
+        document.getElementById('btnNewCategory')?.addEventListener('click', () => this.showCategoryForm());
+        document.getElementById('btnNewEpisode')?.addEventListener('click', () => this.showEpisodeForm());
+        
+        // Фильтры
+        document.getElementById('categoryFilter')?.addEventListener('change', () => this.renderEpisodes());
+        document.getElementById('episodeSearch')?.addEventListener('input', () => this.renderEpisodes());
+        
+        // Модальные окна
+        document.getElementById('categoryEditForm')?.addEventListener('submit', (e) => this.handleSaveCategory(e));
+        document.getElementById('episodeEditForm')?.addEventListener('submit', (e) => this.handleSaveEpisode(e));
+        document.getElementById('btnCancelCategory')?.addEventListener('click', () => this.hideCategoryModal());
+        document.getElementById('btnCancelEdit')?.addEventListener('click', () => this.hideEpisodeModal());
+        document.getElementById('btnDeleteCategory')?.addEventListener('click', () => this.handleDeleteCategory());
+        document.getElementById('btnDeleteEpisode')?.addEventListener('click', () => this.handleDeleteEpisode());
+        document.getElementById('closeCategoryModal')?.addEventListener('click', () => this.hideCategoryModal());
+        document.getElementById('closeEpisodeModal')?.addEventListener('click', () => this.hideEpisodeModal());
+      }
+
+      handleLogin(e) {
+        e.preventDefault();
+        const password = document.getElementById('adminPassword').value;
+        const savedPassword = localStorage.getItem('crawl_admin_password');
+        
+        if (password === savedPassword) {
+          // Создаем токен авторизации
+          const token = btoa(Date.now() + '_' + password).slice(0, 32);
+          localStorage.setItem('crawl_admin_auth', token);
+          
+          this.showAdminInterface();
+          this.loadData();
+          this.renderStats();
+          this.renderCategories();
+          this.renderEpisodes();
+        } else {
+          alert('❌ Неверный пароль');
+        }
+      }
+
+      handleLogout() {
+        localStorage.removeItem('crawl_admin_auth');
+        this.showLoginScreen();
+      }
+
+      showLoginScreen() {
+        document.getElementById('loginScreen').style.display = 'block';
+        document.getElementById('adminInterface').style.display = 'none';
+      }
+
+      showAdminInterface() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminInterface').style.display = 'block';
+      }
+
+      refreshData() {
+        this.loadData();
+        this.renderStats();
+        this.renderCategories();
+        this.renderEpisodes();
+        alert('✅ Данные обновлены');
+      }
+
+      renderStats() {
+        const now = new Date();
+        const published = this.data.episodes.filter(ep => !ep.date || new Date(ep.date) <= now).length;
+        const scheduled = this.data.episodes.filter(ep => ep.date && new Date(ep.date) > now).length;
+
+        document.getElementById('totalEpisodes').textContent = this.data.episodes.length;
+        document.getElementById('totalCategories').textContent = this.data.categories.length - 1;
+        document.getElementById('publishedEpisodes').textContent = published;
+        document.getElementById('scheduledEpisodes').textContent = scheduled;
+      }
+
+      renderCategories() {
+        const container = document.getElementById('categoriesList');
+        if (!container) return;
+
+        const categories = this.data.categories.filter(cat => !cat.isDefault);
+        
+        container.innerHTML = categories.map(category => {
+          const episodeCount = this.data.episodes.filter(ep => ep.category === category.id).length;
+          
+          return `
+            <div class="category-card">
+              <div class="category-header">
+                <div class="category-icon">${category.icon}</div>
+                <div class="category-info">
+                  <h3 class="category-name">${category.name}</h3>
+                  <p class="category-desc">${category.description || 'Описание отсутствует'}</p>
+                </div>
+              </div>
+              <div class="category-stats">
+                <span class="episode-count">${episodeCount} эпизодов</span>
+                <div class="category-actions">
+                  <button class="btn-secondary btn-small" onclick="adminPanel.editCategory('${category.id}')">
+                    ✏️ Изменить
+                  </button>
+                  <button class="btn-danger btn-small" onclick="adminPanel.deleteCategoryPrompt('${category.id}')">
+                    🗑️ Удалить
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        if (categories.length === 0) {
+          container.innerHTML = `
+            <div class="no-categories" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);">
+              <div style="font-size: 48px; margin-bottom: 20px;">📂</div>
+              <h3 style="color: var(--muted); margin-bottom: 10px;">Категорий пока нет</h3>
+              <p>Создайте первую категорию для организации эпизодов</p>
+            </div>
+          `;
+        }
+
+        this.updateCategoryFilter();
+      }
+
+      renderEpisodes() {
+        const container = document.getElementById('episodeListAdmin');
+        if (!container) return;
+
+        const categoryFilter = document.getElementById('categoryFilter').value;
+        const searchQuery = document.getElementById('episodeSearch').value.toLowerCase();
+        
+        let episodes = this.data.episodes;
+
+        // Фильтр по категории
+        if (categoryFilter !== 'all') {
+          episodes = episodes.filter(ep => ep.category === categoryFilter);
+        }
+
+        // Поиск
+        if (searchQuery) {
+          episodes = episodes.filter(ep => 
+            ep.title.toLowerCase().includes(searchQuery) || 
+            (ep.desc && ep.desc.toLowerCase().includes(searchQuery))
+          );
+        }
+
+        container.innerHTML = episodes.map(episode => {
+          const category = this.data.categories.find(cat => cat.id === episode.category);
+          const isFuture = episode.date && new Date(episode.date) > new Date();
+          
+          return `
+            <div class="episode-item-admin">
+              <div class="episode-item-header">
+                <h3 class="episode-item-title">${episode.title}</h3>
+                <div class="episode-item-meta">
+                  <span class="episode-category-badge">${category?.icon || '📁'} ${category?.name || 'Без категории'}</span>
+                  <span class="episode-date-badge">
+                    ${episode.date ? 
+                      `📅 ${new Date(episode.date).toLocaleDateString()}` : 
+                      '✅ Опубликован'}
+                  </span>
+                </div>
+              </div>
+              <p class="episode-item-desc">${episode.desc || 'Описание отсутствует'}</p>
+              <div class="episode-item-actions">
+                <button class="btn-secondary btn-small" onclick="adminPanel.editEpisode('${episode.id}')">
+                  ✏️ Редактировать
+                </button>
+                <button class="btn-danger btn-small" onclick="adminPanel.deleteEpisodePrompt('${episode.id}')">
+                  🗑️ Удалить
+                </button>
+                <button class="btn-primary btn-small" onclick="adminPanel.previewEpisode('${episode.id}')">
+                  👁️ Предпросмотр
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        if (episodes.length === 0) {
+          container.innerHTML = `
+            <div class="no-episodes" style="text-align: center; padding: 40px; color: var(--muted);">
+              <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
+              <h3 style="color: var(--muted); margin-bottom: 10px;">Эпизоды не найдены</h3>
+              <p>Попробуйте изменить параметры поиска или фильтрации</p>
+            </div>
+          `;
+        }
+      }
+
+      updateCategoryFilter() {
+        const filter = document.getElementById('categoryFilter');
+        if (!filter) return;
+
+        const categories = this.data.categories.filter(cat => !cat.isDefault);
+        
+        filter.innerHTML = `
+          <option value="all">Все категории</option>
+          ${categories.map(cat => `
+            <option value="${cat.id}">${cat.icon} ${cat.name}</option>
+          `).join('')}
+        `;
+      }
+
+      setupIconsGrid() {
+        const grid = document.getElementById('iconsGrid');
+        if (!grid) return;
+
+        grid.innerHTML = this.availableIcons.map(icon => `
+          <div class="icon-option ${icon === this.selectedIcon ? 'selected' : ''}" 
+               data-icon="${icon}" onclick="adminPanel.selectIcon('${icon}')">
+            ${icon}
+          </div>
+        `).join('');
+      }
+
+      selectIcon(icon) {
+        this.selectedIcon = icon;
+        this.setupIconsGrid();
+      }
+
+      // === КАТЕГОРИИ ===
+      showCategoryForm(categoryId = null) {
+        this.currentEditingId = categoryId;
+        this.currentEditingType = 'category';
+        
+        const modal = document.getElementById('categoryModal');
+        const title = document.getElementById('categoryModalTitle');
+        const deleteBtn = document.getElementById('btnDeleteCategory');
+
+        if (categoryId) {
+          const category = this.data.categories.find(cat => cat.id === categoryId);
+          if (category) {
+            title.textContent = 'Редактирование категории';
+            document.getElementById('categoryName').value = category.name;
+            document.getElementById('categoryDesc').value = category.description || '';
+            this.selectedIcon = category.icon;
+            deleteBtn.style.display = 'block';
+          }
+        } else {
+          title.textContent = 'Новая категория';
+          document.getElementById('categoryEditForm').reset();
+          this.selectedIcon = '📁';
+          deleteBtn.style.display = 'none';
+        }
+
+        this.setupIconsGrid();
+        modal.classList.add('open');
+      }
+
+      hideCategoryModal() {
+        document.getElementById('categoryModal').classList.remove('open');
+      }
+
+      handleSaveCategory(e) {
+        e.preventDefault();
+
+        const name = document.getElementById('categoryName').value.trim();
+        const description = document.getElementById('categoryDesc').value.trim();
+
+        if (!name) {
+          alert('❌ Введите название категории');
+          return;
+        }
+
+        const categoryData = {
+          name,
+          description,
+          icon: this.selectedIcon
+        };
+
+        if (this.currentEditingId) {
+          // Редактирование существующей категории
+          const category = this.data.categories.find(cat => cat.id === this.currentEditingId);
+          if (category) {
+            Object.assign(category, categoryData);
+          }
+        } else {
+          // Создание новой категории
+          const newCategory = {
+            id: 'cat_' + Math.random().toString(36).slice(2, 9),
+            ...categoryData,
+            isDefault: false
+          };
+          this.data.categories.push(newCategory);
+        }
+
+        this.saveData();
+        this.renderStats();
+        this.renderCategories();
+        this.renderEpisodes();
+        this.hideCategoryModal();
+        
+        alert('✅ Категория сохранена!');
+      }
+
+      editCategory(categoryId) {
+        this.showCategoryForm(categoryId);
+      }
+
+      deleteCategoryPrompt(categoryId) {
+        const category = this.data.categories.find(cat => cat.id === categoryId);
+        if (!category) return;
+
+        const episodeCount = this.data.episodes.filter(ep => ep.category === categoryId).length;
+        let message = `Удалить категорию "${category.name}"?`;
+        
+        if (episodeCount > 0) {
+          message += ` Все эпизоды (${episodeCount} шт.) будут перемещены в "Все эпизоды".`;
+        }
+
+        if (confirm(message)) {
+          this.deleteCategory(categoryId);
+        }
+      }
+
+      deleteCategory(categoryId) {
+        // Перемещаем эпизоды в категорию "Все эпизоды"
+        this.data.episodes.forEach(ep => {
+          if (ep.category === categoryId) {
+            ep.category = 'cat_1';
+          }
+        });
+
+        // Удаляем категорию
+        this.data.categories = this.data.categories.filter(cat => cat.id !== categoryId);
+        
+        this.saveData();
+        this.renderStats();
+        this.renderCategories();
+        this.renderEpisodes();
+        alert('🗑️ Категория удалена');
+      }
+
+      handleDeleteCategory() {
+        if (this.currentEditingId) {
+          this.deleteCategoryPrompt(this.currentEditingId);
+          this.hideCategoryModal();
+        }
+      }
+
+      // === ЭПИЗОДЫ ===
+      showEpisodeForm(episodeId = null) {
+        this.currentEditingId = episodeId;
+        this.currentEditingType = 'episode';
+        
+        const modal = document.getElementById('episodeModal');
+        const title = document.getElementById('episodeModalTitle');
+        const deleteBtn = document.getElementById('btnDeleteEpisode');
+        const categorySelect = document.getElementById('editCategory');
+
+        // Заполняем выбор категорий
+        const categories = this.data.categories.filter(cat => !cat.isDefault);
+        categorySelect.innerHTML = `
+          <option value="">Выберите категорию</option>
+          ${categories.map(cat => `
+            <option value="${cat.id}">${cat.icon} ${cat.name}</option>
+          `).join('')}
+        `;
+
+        if (episodeId) {
+          const episode = this.data.episodes.find(ep => ep.id === episodeId);
+          if (episode) {
+            title.textContent = 'Редактирование эпизода';
+            document.getElementById('editTitle').value = episode.title;
+            document.getElementById('editDesc').value = episode.desc || '';
+            document.getElementById('editDate').value = episode.date || '';
+            document.getElementById('editContent').value = episode.content;
+            document.getElementById('editCategory').value = episode.category;
+            deleteBtn.style.display = 'block';
+          }
+        } else {
+          title.textContent = 'Новый эпизод';
+          document.getElementById('episodeEditForm').reset();
+          deleteBtn.style.display = 'none';
+        }
+
+        modal.classList.add('open');
+      }
+
+      hideEpisodeModal() {
+        document.getElementById('episodeModal').classList.remove('open');
+      }
+
+      handleSaveEpisode(e) {
+        e.preventDefault();
+
+        const episodeData = {
+          title: document.getElementById('editTitle').value.trim(),
+          desc: document.getElementById('editDesc').value.trim(),
+          date: document.getElementById('editDate').value,
+          content: document.getElementById('editContent').value.trim(),
+          category: document.getElementById('editCategory').value
+        };
+
+        if (!episodeData.title || !episodeData.content || !episodeData.category) {
+          alert('❌ Заполните все обязательные поля');
+          return;
+        }
+
+        if (this.currentEditingId) {
+          // Редактирование существующего эпизода
+          const episode = this.data.episodes.find(ep => ep.id === this.currentEditingId);
+          if (episode) {
+            Object.assign(episode, episodeData);
+          }
+        } else {
+          // Создание нового эпизода
+          const newEpisode = {
+            id: 'e_' + Math.random().toString(36).slice(2, 9),
+            ...episodeData,
+            createdAt: new Date().toISOString()
+          };
+          this.data.episodes.unshift(newEpisode);
+        }
+
+        this.saveData();
+        this.renderStats();
+        this.renderEpisodes();
+        this.hideEpisodeModal();
+        
+        alert('✅ Эпизод сохранен!');
+      }
+
+      editEpisode(episodeId) {
+        this.showEpisodeForm(episodeId);
+      }
+
+      deleteEpisodePrompt(episodeId) {
+        const episode = this.data.episodes.find(ep => ep.id === episodeId);
+        if (!episode) return;
+
+        if (confirm(`Удалить эпизод "${episode.title}"? Это действие нельзя отменить.`)) {
+          this.deleteEpisode(episodeId);
+        }
+      }
+
+      deleteEpisode(episodeId) {
+        this.data.episodes = this.data.episodes.filter(ep => ep.id !== episodeId);
+        this.saveData();
+        this.renderStats();
+        this.renderEpisodes();
+        alert('🗑️ Эпизод удален');
+      }
+
+      handleDeleteEpisode() {
+        if (this.currentEditingId) {
+          this.deleteEpisodePrompt(this.currentEditingId);
+          this.hideEpisodeModal();
+        }
+      }
+
+      previewEpisode(episodeId) {
+        const episode = this.data.episodes.find(ep => ep.id === episodeId);
+        if (episode) {
+          // Можно добавить предпросмотр в основном окне
+          alert('👁️ Предпросмотр эпизода: ' + episode.title);
+        }
+      }
+
+      genId() {
+        return 'e_' + Math.random().toString(36).slice(2, 9);
+      }
+
+      genCategoryId() {
+        return 'cat_' + Math.random().toString(36).slice(2, 9);
+      }
+    }
+
+    // Создаем глобальный экземпляр
+    window.adminPanel = new AdminPanel();
+
+    // Запускаем при загрузке
+    document.addEventListener('DOMContentLoaded', () => {
+      window.adminPanel.init();
+    });
+  </script>
+</body>
+</html>
