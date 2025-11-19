@@ -585,14 +585,14 @@
             ...doc.data()
           }))
           .filter(story => {
-            // Показываем опубликованные ИЛИ те, у которых наступила/наступит дата публикации
-            if (story.published === true) return true;
-            if (story.publishDate) {
-              const publishTime = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
-              return publishTime <= new Date();
-            }
-            return false;
-          })
+           // Показываем опубликованные И запланированные (для таймера)
+           if (story.published === true) return true;
+           if (story.publishDate) {
+          // Показываем запланированные чтобы видеть таймер
+           return true;
+             }
+           return false;
+        })
           .sort((a, b) => {
             // Сначала запланированные, потом опубликованные
             const dateA = a.publishDate?.toDate ? a.publishDate.toDate() : new Date(a.publishDate || a.createdAt);
