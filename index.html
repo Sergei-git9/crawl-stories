@@ -1,501 +1,91 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CRAWL.STORIES — кинематографичные истории</title>
-  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRAWL.STORIES — улучшенная версия</title>
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  
+
   <style>
     :root {
       --bg: #020205;
       --accent: #FFE81F;
       --muted: #9aa0a6;
       --card: #0b0b0f;
-      --glass: rgba(255,255,255,0.03);
       --font: "Courier New", monospace;
       --header-height: 70px;
     }
 
     * { box-sizing: border-box; }
+    html, body { height:100%; margin:0; background: var(--bg); color:#fff; font-family: var(--font); -webkit-font-smoothing: antialiased; }
 
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: var(--bg);
-      color: #fff;
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-    }
+    header { height: var(--header-height); border-bottom:1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(2,2,5,0.95), transparent); backdrop-filter:blur(10px); position: sticky; top:0; z-index:100; }
+    .header-content { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:100%; max-width:1400px; margin:0 auto; }
+    header h1 { margin:0; font-size:20px; color:var(--accent); letter-spacing:1px; text-shadow:0 0 6px rgba(255,232,31,0.5); }
 
-    header {
-      height: var(--header-height);
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      background: linear-gradient(180deg, rgba(2,2,5,0.95), transparent);
-      backdrop-filter: blur(10px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+    .main-nav { display:flex; gap:15px; flex:1; justify-content:center; overflow-x:auto; }
+    .nav-btn { background:transparent; border:1px solid rgba(255,255,255,0.1); color:var(--muted); padding:8px 16px; border-radius:20px; cursor:pointer; transition:all 0.3s ease; font-size:14px; white-space:nowrap; }
+    .nav-btn:hover, .nav-btn.active { background:var(--accent); color:var(--bg); border-color:var(--accent); box-shadow:0 0 15px rgba(255,232,31,0.4); }
 
-    .header-content {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      height: 100%;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
+    .btn-admin { background:var(--accent); color:var(--bg); border:none; padding:8px 16px; border-radius:20px; cursor:pointer; font-weight:bold; font-size:14px; }
 
-    header h1 {
-      margin: 0;
-      font-size: 20px;
-      color: var(--accent);
-      letter-spacing: 1px;
-    }
+    .main-content { max-width:1400px; margin:0 auto; padding:20px; display:flex; flex-direction:column; gap:30px; }
 
-    .main-nav {
-      display: flex;
-      gap: 15px;
-      flex: 1;
-      justify-content: center;
-    }
+    .player-section { display:flex; flex-direction:column; gap:15px; }
+    .stage { position:relative; overflow:hidden; height:50vh; min-height:400px; border-radius:15px; background: linear-gradient(180deg,#000,#05050a); border:1px solid rgba(255,255,255,0.05); }
+    #stars { position:absolute; inset:0; z-index:0; pointer-events:none; }
+    .star { position:absolute; background:#fff; border-radius:50%; pointer-events:none; }
 
-    .nav-btn {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--muted);
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 14px;
-      white-space: nowrap;
-    }
+    .scene { position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center; perspective:900px; z-index:2; pointer-events:none; }
+    .crawl-wrap { width:90%; max-width:1000px; pointer-events:none; transform-origin:center bottom; }
+    pre.crawl { white-space:pre; line-height:1.3; text-align:center; font-size:clamp(16px,2.5vw,24px); color:var(--accent); margin:0; padding:30px 20px; pointer-events:none; text-shadow:0 0 10px rgba(255,232,31,0.5); }
 
-    .nav-btn.active {
-     background: var(--accent) !important;
-     color: var(--bg) !important;
-     border-color: var(--accent) !important;
-    }
+    .player-controls-panel { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; background:var(--card); border-radius:10px; border:1px solid rgba(255,255,255,0.03); }
+    .control-btn { background:transparent; border:1px solid rgba(255,255,255,0.1); color:var(--accent); padding:10px 20px; border-radius:8px; cursor:pointer; transition:all 0.3s ease; font-size:14px; }
+    .control-btn:hover { background: rgba(255,232,31,0.1); border-color: var(--accent); transform:translateY(-2px); }
 
-    .nav-btn:hover, .nav-btn.active {
-      background: var(--accent);
-      color: var(--bg);
-      border-color: var(--accent);
-    }
+    .controls-left, .controls-right { display:flex; align-items:center; gap:10px; }
+    .speed-label { color:var(--muted); font-size:14px; }
+    .speed-value { color:var(--accent); font-size:14px; min-width:30px; }
+    input[type=range] { width:120px; height:4px; background: rgba(255,255,255,0.1); border-radius:2px; outline:none; -webkit-appearance:none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; background:var(--accent); border-radius:50%; cursor:pointer; }
 
-    .header-controls {
-      display: flex;
-      gap: 10px;
-    }
+    .stories-section { margin-top:20px; }
+    .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .section-header h2 { margin:0; color:var(--accent); font-size:24px; text-shadow:0 0 5px rgba(255,232,31,0.4); }
+    .stories-count { color:var(--muted); font-size:14px; }
 
-    .btn-admin {
-      background: var(--accent);
-      color: var(--bg);
-      border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 14px;
-    }
+    .stories-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+    .story-card { background: linear-gradient(180deg,var(--card),#07070a); border-radius:12px; padding:20px; border:1px solid rgba(255,255,255,0.03); cursor:pointer; transition:all 0.3s ease; position:relative; overflow:hidden; }
+    .story-card:hover { transform:translateY(-5px); border-color:rgba(255,232,31,0.2); box-shadow:0 10px 30px rgba(255,232,31,0.1); }
+    .story-card.blocked { cursor:not-allowed; opacity:0.7; }
+    .story-card.blocked:hover { transform:none; border-color:rgba(255,255,255,0.03); box-shadow:none; }
 
-    .main-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 30px;
-    }
+    .story-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+    .story-title { margin:0; color:var(--accent); font-size:18px; line-height:1.3; flex:1; text-shadow:0 0 6px rgba(255,232,31,0.4); }
+    .story-badge { background: rgba(255,232,31,0.1); color:var(--accent); padding:4px 8px; border-radius:12px; font-size:11px; font-weight:bold; margin-left:10px; white-space:nowrap; }
+    .story-badge.scheduled { background: rgba(255,193,7,0.1); color:#ffc107; }
+    .story-badge.soon { background: rgba(158,158,158,0.1); color:#9e9e9e; }
 
-    .player-section {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
+    .story-desc { color:var(--muted); font-size:14px; line-height:1.4; margin-bottom:15px; }
 
-    .stage {
-      position: relative;
-      overflow: hidden;
-      height: 50vh;
-      min-height: 400px;
-      border-radius: 15px;
-      background: linear-gradient(180deg, #000, #05050a);
-      border: 1px solid rgba(255,255,255,0.05);
-    }
+    .blocked-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(2,2,5,0.8); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s ease; backdrop-filter:blur(2px); }
+    .story-card.blocked:hover .blocked-overlay { opacity:1; }
+    .blocked-message { text-align:center; padding:20px; color:var(--accent); }
 
-    #stars {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
+    .countdown-bar { height:4px; background: rgba(255,255,255,0.1); border-radius:2px; margin-top:10px; overflow:hidden; }
+    .countdown-progress { height:100%; background: linear-gradient(90deg,#ffc107,#ff9800); border-radius:2px; animation:pulse 2s infinite; }
 
-    .star {
-      position: absolute;
-      background: #fff;
-      border-radius: 50%;
-      pointer-events: none;
-    }
+    @keyframes crawl { 0% { transform: translateY(120vh) rotateX(20deg) scale(1); opacity:1; } 100% { transform: translateY(-260vh) rotateX(20deg) scale(0.36); opacity:0; } }
+    @keyframes pulse { 0%{opacity:0.7;}50%{opacity:1;}100%{opacity:0.7;} }
 
-    .scene {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      perspective: 900px;
-      z-index: 2;
-      pointer-events: none;
-    }
-
-    .crawl-wrap {
-      width: 90%;
-      max-width: 1000px;
-      pointer-events: none;
-      transform-origin: center bottom;
-    }
-
-    pre.crawl {
-      white-space: pre;
-      line-height: 1.3;
-      text-align: center;
-      font-size: clamp(16px, 2.5vw, 24px);
-      color: var(--accent);
-      margin: 0;
-      padding: 30px 20px;
-      pointer-events: none;
-      text-shadow: 0 0 10px rgba(255,232,31,0.5);
-      font-family: var(--font);
-    }
-
-    .player-controls-panel {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 20px;
-      background: var(--card);
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.03);
-    }
-
-    .controls-left {
-      display: flex;
-      gap: 10px;
-    }
-
-    .control-btn {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--accent);
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 14px;
-    }
-
-    .control-btn:hover {
-      background: rgba(255,232,31,0.1);
-      border-color: var(--accent);
-    }
-
-    .controls-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .speed-label {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .speed-value {
-      color: var(--accent);
-      font-size: 14px;
-      min-width: 30px;
-    }
-
-    input[type="range"] {
-      width: 120px;
-      height: 4px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 2px;
-      outline: none;
-      -webkit-appearance: none;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      background: var(--accent);
-      border-radius: 50%;
-      cursor: pointer;
-    }
-
-    .stories-section {
-      margin-top: 20px;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .section-header h2 {
-      margin: 0;
-      color: var(--accent);
-      font-size: 24px;
-    }
-
-    .stories-count {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .stories-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
-    }
-
-    .story-card {
-      background: linear-gradient(180deg, var(--card), #07070a);
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255,255,255,0.03);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .story-card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(255,232,31,0.2);
-      box-shadow: 0 10px 30px rgba(255,232,31,0.1);
-    }
-
-    .story-card.scheduled {
-      border-color: #ffc107 !important;
-      background: linear-gradient(180deg, #0b0b0f, #1a1a1f) !important;
-    }
-
-    .story-card.soon {
-      border-color: #9e9e9e !important;
-      background: linear-gradient(180deg, #0b0b0f, #15151a) !important;
-    }
-
-    .story-card.blocked {
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-
-    .story-card.blocked:hover {
-      transform: none;
-      border-color: rgba(255,255,255,0.03) !important;
-      box-shadow: none;
-    }
-
-    .story-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 10px;
-    }
-
-    .story-title {
-      margin: 0;
-      color: var(--accent);
-      font-size: 18px;
-      line-height: 1.3;
-      flex: 1;
-    }
-
-    .story-badge {
-      background: rgba(255,232,31,0.1);
-      color: var(--accent);
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: bold;
-      margin-left: 10px;
-      white-space: nowrap;
-    }
-
-    .story-badge.scheduled {
-      background: rgba(255, 193, 7, 0.1);
-      color: #ffc107;
-    }
-
-    .story-badge.soon {
-      background: rgba(158, 158, 158, 0.1);
-      color: #9e9e9e;
-    }
-
-    .story-desc {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.4;
-      margin-bottom: 15px;
-    }
-
-    .story-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .story-date {
-      color: #7f8c8d;
-    }
-
-    .status-published {
-      background: #00c853;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: bold;
-    }
-
-    .status-scheduled {
-      background: rgba(255, 193, 7, 0.1);
-      color: #ffc107;
-      padding: 2px 8px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: bold;
-    }
-
-    .status-soon {
-      background: rgba(158, 158, 158, 0.1);
-      color: #9e9e9e;
-      padding: 2px 8px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: bold;
-    }
-
-    .blocked-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(2,2,5,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      backdrop-filter: blur(2px);
-    }
-
-    .story-card.blocked:hover .blocked-overlay {
-      opacity: 1;
-    }
-
-    .blocked-message {
-      text-align: center;
-      padding: 20px;
-      color: var(--accent);
-    }
-
-    .blocked-message h4 {
-      margin: 0 0 10px 0;
-      color: var(--accent);
-    }
-
-    .blocked-message p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .countdown-bar {
-      height: 4px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 2px;
-      margin-top: 10px;
-      overflow: hidden;
-    }
-
-    .countdown-progress {
-      height: 100%;
-      background: linear-gradient(90deg, #ffc107, #ff9800);
-      border-radius: 2px;
-      animation: pulse 2s infinite;
-    }
-
-    .announcement-card {
-      background: linear-gradient(180deg, #15151a, #0b0b0f);
-      border: 1px solid rgba(255,193,7,0.2);
-    }
-
-    .announcement-badge {
-      background: rgba(255,193,7,0.1);
-      color: #ffc107;
-    }
-
-    .episodes-count {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 5px;
-    }
-
-    @keyframes crawl {
-      0% { transform: translateY(120vh) rotateX(20deg) scale(1); opacity: 1; }
-      100% { transform: translateY(-260vh) rotateX(20deg) scale(0.36); opacity: 0; }
-    }
-
-    @keyframes tw {
-      0% { opacity: 0.15; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.12); }
-      100% { opacity: 0.35; transform: scale(1); }
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.7; }
-      50% { opacity: 1; }
-      100% { opacity: 0.7; }
-    }
-
-    @media (max-width: 768px) {
-      :root { --header-height: 60px; }
-      .header-content { padding: 0 15px; }
-      header h1 { font-size: 16px; }
-      .main-nav { gap: 8px; overflow-x: auto; padding: 10px 0; justify-content: flex-start; }
-      .nav-btn { padding: 6px 12px; font-size: 12px; flex-shrink: 0; }
-      .btn-admin { padding: 6px 12px; font-size: 12px; }
-      .main-content { padding: 15px; gap: 20px; }
-      .stage { height: 40vh; min-height: 300px; border-radius: 10px; }
-      pre.crawl { padding: 20px 15px; font-size: 16px; }
-      .player-controls-panel { flex-direction: column; gap: 15px; padding: 15px; }
-      .controls-left, .controls-right { width: 100%; justify-content: center; }
-      .stories-grid { grid-template-columns: 1fr; gap: 15px; }
-      .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-      .section-header h2 { font-size: 20px; }
-      .story-card { padding: 15px; }
-      .story-header { flex-direction: column; gap: 8px; }
-      .story-badge { align-self: flex-start; margin-left: 0; }
-    }
+    @media(max-width:768px){ :root {--header-height:60px;} .header-content{padding:0 15px;} header h1{font-size:16px;} .main-nav{gap:8px; padding:10px 0; justify-content:flex-start;} .nav-btn{padding:6px 12px; font-size:12px;} .btn-admin{padding:6px 12px; font-size:12px;} .main-content{padding:15px; gap:20px;} .stage{height:40vh; min-height:300px; border-radius:10px;} pre.crawl{padding:20px 15px; font-size:16px;} .player-controls-panel{flex-direction:column; gap:15px; padding:15px;} .controls-left,.controls-right{width:100%; justify-content:center;} .stories-grid{grid-template-columns:1fr; gap:15px;} .section-header{flex-direction:column; align-items:flex-start; gap:10px;} .section-header h2{font-size:20px;} .story-card{padding:15px;} .story-header{flex-direction:column; gap:8px;} .story-badge{align-self:flex-start; margin-left:0;} }
   </style>
 
   <script>
-    // Конфиг Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyANC4K0-xI-9SvrpoiOp4v-N2XLvCQCALg",
       authDomain: "crawl-stories.firebaseapp.com",
@@ -505,12 +95,9 @@
       appId: "1:886479757650:web:194ad1dd2d02c959bdda8b",
       measurementId: "G-SGC2HF0455"
     };
-
-    // Инициализация Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     console.log('🔥 Firebase инициализирован');
-    console.log('📁 Project ID:', firebaseConfig.projectId);
   </script>
 </head>
 <body>
@@ -535,7 +122,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="player-controls-panel">
           <div class="controls-left">
             <button id="play" class="control-btn">▶️ Старт</button>
@@ -560,528 +147,6 @@
     </main>
   </div>
 
-  <script>
-    class PublicApp {
-      constructor() {
-        this.stories = [];
-        this.announcements = [];
-        this.categories = {};
-        this.currentStory = null;
-        this.player = new Player();
-        this.currentCategory = 'all';
-        this.init();
-      }
-
-      initCategories() {
-        this.categories = {
-          'all': '📚 Все истории',
-          'published': '🚀 Опубликовано',
-          'scheduled': '⏰ Ожидание', 
-          'soon': '🕐 Скоро',
-          'announcements': '📢 Анонсы',
-          'fantasy': '🧙 Фэнтези',
-          'sci-fi': '🚀 Научная фантастика', 
-          'horror': '👻 Хоррор',
-          'adventure': '🗺️ Приключения',
-          'mystery': '🕵️ Мистика'
-        };
-      }
-
-      renderCategoryFilters() {
-        const nav = document.getElementById('mainNav');
-        if (!nav) return;
-
-        nav.innerHTML = Object.keys(this.categories).map(category => `
-          <button class="nav-btn ${this.currentCategory === category ? 'active' : ''}" 
-                  data-category="${category}">
-            ${this.categories[category]}
-          </button>
-        `).join('');
-
-        // Обновляем заголовок категории
-        const categoryTitle = document.getElementById('currentCategoryTitle');
-        if (categoryTitle) {
-          categoryTitle.textContent = this.categories[this.currentCategory];
-        }
-
-        // Обработчики для фильтров
-        nav.querySelectorAll('.nav-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            this.currentCategory = e.target.dataset.category;
-            this.renderCategoryFilters();
-            this.renderContent();
-          });
-        });
-      }
-
-      getCategoryName(category, customCategory) {
-        const categories = {
-          'fantasy': '🧙 Фэнтези',
-          'sci-fi': '🚀 Научная фантастика', 
-          'horror': '👻 Хоррор',
-          'adventure': '🗺️ Приключения',
-          'mystery': '🕵️ Мистика'
-        };
-        return customCategory || categories[category] || category;
-      }
-
-      getTimeUntilPublish(publishDate) {
-        const now = new Date();
-        const publish = publishDate?.toDate ? publishDate.toDate() : new Date(publishDate);
-        const diff = publish - now;
-        
-        if (diff <= 0) return 'Скоро...';
-        
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        
-        if (days > 0) return `Через ${days}д ${hours}ч`;
-        if (hours > 0) return `Через ${hours}ч ${minutes}м`;
-        return `Через ${minutes}м`;
-      }
-
-      getProgressPercent(publishDate) {
-        const now = new Date();
-        const publish = publishDate?.toDate ? publishDate.toDate() : new Date(publishDate);
-        const total = publish - (new Date(publish.getTime() - 7 * 24 * 60 * 60 * 1000)); // неделя до публикации
-        const passed = now - (new Date(publish.getTime() - 7 * 24 * 60 * 60 * 1000));
-        return Math.min(100, Math.max(0, (passed / total) * 100));
-      }
-
-      startCountdownTimer() {
-        setInterval(() => {
-          this.updateCountdowns();
-        }, 30000); // Обновляем каждые 30 секунд
-      }
-
-      updateCountdowns() {
-        const storiesWithCountdown = this.stories.filter(story => 
-          story.publishDate && new Date(story.publishDate) > new Date()
-        );
-        
-        if (storiesWithCountdown.length > 0) {
-          this.renderContent();
-        }
-      }
-
-      async init() {
-        await this.loadPublicData();
-        this.initCategories();
-        this.renderCategoryFilters();
-        this.setupEventListeners();
-        this.initEffects();
-        this.startCountdownTimer();
-        console.log('🎬 Публичное приложение запущено');
-      }
-
-      async loadPublicData() {
-        try {
-          console.log('🔄 Загрузка опубликованных историй...');
-          
-          // Загружаем истории
-          const storiesSnapshot = await db.collection('stories').get();
-          
-          this.stories = storiesSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })).filter(story => {
-            // ФИКС: Показываем только публичные истории
-            if (story.isPublic === false) return false;
-            
-            // Показываем опубликованные
-            if (story.published === true) return true;
-            
-            // Показываем запланированные с таймером
-            if (story.publishDate) {
-              const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
-              // Показываем запланированные только для таймера, даже если время еще не наступило
-              return true;
-            }
-            
-            // Показываем "скоро" для анонсов
-            return true;
-          });
-
-          // Загружаем анонсы
-          const announcementsSnapshot = await db.collection('announcements').get();
-          this.announcements = announcementsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })).filter(announcement => announcement.isPublic !== false);
-
-          console.log('✅ Загружено историй:', this.stories.length);
-          console.log('✅ Загружено анонсов:', this.announcements.length);
-          this.renderContent();
-
-        } catch (error) {
-          console.error('❌ Ошибка загрузки данных:', error);
-          this.showError('Не удалось загрузить истории');
-        }
-      }
-
-      renderContent() {
-        const container = document.getElementById('storiesList');
-        if (!container) return;
-
-        let content = '';
-        
-        if (this.currentCategory === 'announcements') {
-          content = this.renderAnnouncements();
-        } else {
-          content = this.renderStories();
-        }
-
-        container.innerHTML = content;
-      }
-
-      renderStories() {
-        // Фильтруем истории по категории
-        let filteredStories = this.stories;
-        
-        if (this.currentCategory === 'published') {
-          filteredStories = this.stories.filter(story => story.published === true);
-        } else if (this.currentCategory === 'scheduled') {
-          filteredStories = this.stories.filter(story => 
-            story.publishDate && new Date(story.publishDate) > new Date()
-          );
-        } else if (this.currentCategory === 'soon') {
-          filteredStories = this.stories.filter(story => 
-            !story.published && !story.publishDate
-          );
-        } else if (this.currentCategory !== 'all') {
-          filteredStories = this.stories.filter(story => 
-            story.category === this.currentCategory
-          );
-        }
-
-        this.updateStoriesCount(filteredStories.length);
-
-        if (filteredStories.length === 0) {
-          return `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--muted);">
-              <div style="font-size: 64px; margin-bottom: 20px;">📝</div>
-              <h3 style="margin-bottom: 10px; color: var(--muted);">Пока здесь пусто</h3>
-              <p>Истории появятся скоро...</p>
-            </div>
-          `;
-        }
-
-        return filteredStories.map(story => {
-          const isScheduled = story.publishDate && new Date(story.publishDate) > new Date();
-          const isSoon = !story.published && !story.publishDate;
-          const isPublished = story.published === true;
-          const isBlocked = !isPublished; // Блокируем все кроме опубликованных
-
-          const publishDate = story.publishDate?.toDate ? story.publishDate.toDate() : new Date(story.publishDate);
-          
-          return `
-            <div class="story-card ${isScheduled ? 'scheduled' : ''} ${isSoon ? 'soon' : ''} ${isBlocked ? 'blocked' : ''}" 
-                 data-story-id="${story.id}">
-              <div class="story-header">
-                <h3 class="story-title">${story.title}</h3>
-                <div>
-                  ${story.episode ? `<span class="story-badge">Эпизод ${story.episode}</span>` : ''}
-                  <span class="story-badge ${isScheduled ? 'scheduled' : ''} ${isSoon ? 'soon' : ''}">
-                    ${this.getCategoryName(story.category, story.customCategory)}
-                  </span>
-                </div>
-              </div>
-              <p class="story-desc">${story.description || 'Описание отсутствует'}</p>
-              <div class="story-meta">
-                <span class="story-date">
-                  ${isScheduled ? 
-                    `⏰ ${this.getTimeUntilPublish(story.publishDate)}` : 
-                    isSoon ?
-                    `🕐 Скоро` :
-                    `📅 ${new Date(story.createdAt?.toDate()).toLocaleDateString()}`
-                  }
-                </span>
-                <span class="${isScheduled ? 'status-scheduled' : isSoon ? 'status-soon' : 'status-published'}">
-                  ${isScheduled ? '⏰ Ожидание' : isSoon ? '🕐 Скоро' : '✅ Опубликовано'}
-                </span>
-              </div>
-              ${isScheduled ? `
-                <div class="countdown-bar">
-                  <div class="countdown-progress" style="width: ${this.getProgressPercent(story.publishDate)}%"></div>
-                </div>
-              ` : ''}
-              
-              ${isBlocked ? `
-                <div class="blocked-overlay">
-                  <div class="blocked-message">
-                    <h4>⏳ Еще не доступно</h4>
-                    <p>Ожидайте выхода, а пока можете посмотреть другие наши истории</p>
-                  </div>
-                </div>
-              ` : ''}
-            </div>
-          `;
-        }).join('');
-      }
-
-      renderAnnouncements() {
-        if (this.announcements.length === 0) {
-          return `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--muted);">
-              <div style="font-size: 64px; margin-bottom: 20px;">📢</div>
-              <h3 style="margin-bottom: 10px; color: var(--muted);">Анонсов пока нет</h3>
-              <p>Следите за обновлениями...</p>
-            </div>
-          `;
-        }
-
-        this.updateStoriesCount(this.announcements.length);
-
-        return this.announcements.map(announcement => {
-          const firstEpisodeDate = announcement.firstEpisodeDate?.toDate ? 
-            announcement.firstEpisodeDate.toDate() : new Date(announcement.firstEpisodeDate);
-          
-          return `
-            <div class="story-card announcement-card">
-              <div class="story-header">
-                <h3 class="story-title">${announcement.title}</h3>
-                <div>
-                  <span class="story-badge announcement-badge">📢 Анонс</span>
-                </div>
-              </div>
-              <p class="story-desc">${announcement.description || 'Описание отсутствует'}</p>
-              ${announcement.episodesCount ? `
-                <div class="episodes-count">Запланировано эпизодов: ${announcement.episodesCount}</div>
-              ` : ''}
-              <div class="story-meta">
-                <span class="story-date">
-                  ${firstEpisodeDate && firstEpisodeDate > new Date() ? 
-                    `🎬 Премьера: ${firstEpisodeDate.toLocaleDateString()}` : 
-                    '🎬 Скоро'
-                  }
-                </span>
-                <span class="status-soon">📢 Анонс</span>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-
-      updateStoriesCount(count) {
-        const countElement = document.getElementById('storiesCount');
-        if (countElement) {
-          const word = this.currentCategory === 'announcements' ? 
-            this.getAnnouncementsWord(count) : this.getStoriesWord(count);
-          countElement.textContent = `${count} ${word}`;
-        }
-      }
-
-      getStoriesWord(count) {
-        if (count % 10 === 1 && count % 100 !== 11) return 'история';
-        if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return 'истории';
-        return 'историй';
-      }
-
-      getAnnouncementsWord(count) {
-        if (count % 10 === 1 && count % 100 !== 11) return 'анонс';
-        if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return 'анонса';
-        return 'анонсов';
-      }
-
-      setupEventListeners() {
-        document.getElementById('btnAdmin')?.addEventListener('click', () => {
-          window.open('admin.html', '_blank');
-        });
-
-        document.addEventListener('click', (e) => {
-          const storyCard = e.target.closest('.story-card');
-          if (storyCard && !storyCard.classList.contains('blocked')) {
-            const storyId = storyCard.dataset.storyId;
-            if (storyId) {
-              this.openStory(storyId);
-            }
-          } else if (storyCard && storyCard.classList.contains('blocked')) {
-            this.showBlockedMessage();
-          }
-        });
-      }
-
-      openStory(storyId) {
-        const story = this.stories.find(s => s.id === storyId);
-        if (!story) {
-          console.warn('История не найдена:', storyId);
-          return;
-        }
-
-        // ФИКС: Проверяем доступность истории - только опубликованные можно смотреть
-        if (!story.published) {
-          this.showBlockedMessage();
-          return;
-        }
-
-        if (!story.content) {
-          console.warn('У истории нет контента:', storyId);
-          return;
-        }
-
-        this.currentStory = story;
-        document.getElementById('crawl').textContent = story.content;
-        this.player.restartAnimation();
-      }
-
-      showBlockedMessage() {
-        const crawl = document.getElementById('crawl');
-        if (crawl) {
-          crawl.textContent = 'Ой! Данный эпизод еще не доступен, ожидайте выхода, а пока можете посмотреть другие наши истории и эпизоды.';
-          this.player.restartAnimation();
-        }
-      }
-
-      initEffects() {
-        this.createStars();
-        this.startShipAnimation();
-      }
-
-      createStars() {
-        const container = document.getElementById('stars');
-        if (!container) return;
-
-        container.innerHTML = '';
-        for (let i = 0; i < 220; i++) {
-          const star = document.createElement('div');
-          star.className = 'star';
-          const size = (Math.random() * 2.6 + 0.7).toFixed(2);
-          star.style.width = star.style.height = size + 'px';
-          star.style.left = Math.random() * 100 + '%';
-          star.style.top = Math.random() * 100 + '%';
-          star.style.opacity = (0.15 + Math.random() * 0.85).toFixed(2);
-          const duration = 2 + Math.random() * 3;
-          const delay = Math.random() * 4;
-          star.style.animation = `tw ${duration}s ${delay}s infinite alternate`;
-          container.appendChild(star);
-        }
-      }
-
-      startShipAnimation() {
-        setInterval(() => {
-          if (Math.random() > 0.25) return;
-          const ship = document.createElement('div');
-          ship.textContent = '|=|>';
-          ship.style.position = 'fixed';
-          ship.style.left = '-80px';
-          ship.style.top = (Math.random() * 80 + 5) + 'vh';
-          ship.style.color = 'var(--accent)';
-          ship.style.fontFamily = 'monospace';
-          ship.style.fontSize = (8 + Math.random() * 10) + 'px';
-          ship.style.zIndex = '20';
-          ship.style.pointerEvents = 'none';
-          document.body.appendChild(ship);
-
-          const duration = 2500 + Math.random() * 3000;
-          ship.animate([
-            { transform: 'translateX(0) rotate(0deg)', opacity: 0 },
-            { transform: 'translateX(100px) rotate(5deg)', opacity: 1 },
-            { transform: `translateX(${window.innerWidth + 200}px) rotate(0deg)`, opacity: 0.8 }
-          ], { duration: duration, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' });
-
-          setTimeout(() => ship.remove(), duration + 200);
-        }, 900);
-      }
-
-      showError(message) {
-        const container = document.getElementById('storiesList');
-        if (container) {
-          container.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff6b6b;">
-              <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
-              <h3 style="margin-bottom: 10px;">Ошибка загрузки</h3>
-              <p>${message}</p>
-            </div>
-          `;
-        }
-      }
-    }
-
-    class Player {
-      constructor() {
-        this.isPlaying = false;
-        this.currentSpeed = 1;
-        this.init();
-      }
-
-      init() {
-        this.setupControls();
-        this.setupStageClick();
-      }
-
-      setupControls() {
-        document.getElementById('play')?.addEventListener('click', () => this.play());
-        document.getElementById('pause')?.addEventListener('click', () => this.pause());
-        document.getElementById('reset')?.addEventListener('click', () => this.reset());
-        
-        const speedInput = document.getElementById('speed');
-        if (speedInput) {
-          speedInput.addEventListener('input', (e) => {
-            this.setSpeed(parseFloat(e.target.value));
-          });
-        }
-      }
-
-      setupStageClick() {
-        document.getElementById('stage')?.addEventListener('click', () => {
-          this.restartAnimation();
-        });
-      }
-
-      play() {
-        const wrap = document.querySelector('.crawl-wrap');
-        if (wrap) {
-          wrap.style.animationPlayState = 'running';
-          this.isPlaying = true;
-        }
-      }
-
-      pause() {
-        const wrap = document.querySelector('.crawl-wrap');
-        if (wrap) {
-          wrap.style.animationPlayState = 'paused';
-          this.isPlaying = false;
-        }
-      }
-
-      reset() {
-        const wrap = document.querySelector('.crawl-wrap');
-        const crawl = document.getElementById('crawl');
-        if (wrap && crawl) {
-          wrap.style.animation = 'none';
-          crawl.style.opacity = '1';
-          void wrap.offsetWidth;
-          this.restartAnimation();
-        }
-      }
-
-      setSpeed(speed) {
-        this.currentSpeed = speed;
-        const speedValue = document.getElementById('speedValue');
-        if (speedValue) speedValue.textContent = speed.toFixed(1) + 'x';
-        this.restartAnimation();
-      }
-
-      restartAnimation() {
-        const wrap = document.querySelector('.crawl-wrap');
-        const crawl = document.getElementById('crawl');
-        if (!wrap || !crawl) return;
-
-        const duration = Math.max(8, 120 / this.currentSpeed);
-        wrap.style.animation = 'none';
-        void wrap.offsetWidth;
-        wrap.style.animation = `crawl ${duration}s linear forwards`;
-        wrap.style.animationPlayState = 'running';
-        crawl.style.opacity = '1';
-        this.isPlaying = true;
-      }
-    }
-
-    // Запуск приложения
-    document.addEventListener('DOMContentLoaded', () => {
-      window.app = new PublicApp();
-    });
-  </script>
+  <script src="/mnt/data/index_1.html"></script>
 </body>
 </html>
